@@ -310,8 +310,11 @@ No general-purpose display. State is shown by the physical controls themselves
 | Transport | 3× momentary button | Previous, play/pause, next |
 | Audio feedback | 1× piezo buzzer (GPIO) | Chirps/clicks/error beep; no audio jack needed |
 | Display | SSD1306 OLED (optional, later) | Track + time only |
-| Power | USB-C | TBD |
-| Enclosure | 3D printed (Prusa Core One) | Card spot + encoders + switches |
+| Power | 5V micro-USB PSU (≥2.5A) | Pi Zero uses micro-USB, not USB-C |
+| Enclosure | 3D printed (Prusa Core One) | Card spot + encoders + buttons |
+
+See **[`hardware/BOM.md`](hardware/BOM.md)** for the full shopping list with quantities,
+Danish/EU retailers, indicative prices, and the Pi GPIO pin budget.
 
 ## Software so far
 
