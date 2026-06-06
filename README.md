@@ -114,8 +114,13 @@ on the box. No dedicated mute (disarm a room, or turn its knob to zero).
   volume. Nice-to-have, not required for v1.
 
 ### 6. Configuration interface **(DECIDED: LAN web app with live card enrollment)**
-A small **web app served by the box** on the LAN (`musicbox.local`), opened from any
-phone/laptop. It lists your **Sonos Favorites live** (via SoCo) and lets you bind a card
+A small **web app served by the box** on the LAN, opened from any phone/laptop. On the
+finished Pi this is reachable at **`musicbox.local`** (Raspberry Pi OS ships Avahi/mDNS,
+so setting the Pi's hostname to `musicbox` makes `<hostname>.local` resolve with no DNS
+setup; the bare name needs the app on port 80, otherwise it's `musicbox.local:8080`). On
+the **dev machine today** it's `http://localhost:8080` (and `http://<LAN-IP>:8080` from a
+phone) — the simulator doesn't advertise the `musicbox` name. It lists your **Sonos
+Favorites live** (via SoCo) and lets you bind a card
 by simply **placing it on the box's own NFC spot** — the PN532 reads the UID and the page
 captures it. See "Card configuration" below for the full flow. No Bluetooth flow for v1.
 
@@ -305,7 +310,9 @@ the UID replaces the key on real hardware.)
 
 **Enrollment flow** (the web simulator we built grows into this):
 
-1. Open **`musicbox.local`** from a phone/laptop on the same Wi-Fi.
+1. Open the box's web app from a phone/laptop on the same Wi-Fi — **`musicbox.local`**
+   on the finished Pi (see config-interface note above), or `http://localhost:8080`
+   against today's simulator.
 2. The page lists your **Sonos Favorites live** (via SoCo) — albums, playlists, DR LYD
    stations/podcasts you've saved in the Sonos app.
 3. **Place the card on the box's NFC spot.** The PN532 reads its UID; the page shows
