@@ -191,10 +191,23 @@ drop-in for Apple Music. ([Phoniebox] does BT this way, with local/Spotify audio
 - **DR LYD is a first-class Sonos music service** (Danish). It carries DR's **live
   radio channels, on-demand shows, _and_ podcasts**. So DR radio *and* DR podcasts
   are both reachable — save them as Sonos Favorites like anything else.
-- **Podcasts outside DR are a gap.** Apple **Podcasts** is *not* a Sonos service, so
-  non-DR podcasts can't be played the same way. Options if you want them later:
-  other podcast services that *are* on Sonos, or playing a podcast's RSS audio URL
-  directly. Noting this as a known limitation, not a v1 problem.
+- **Podcasts outside DR — solvable, and even feasible in v1.** Apple **Podcasts** is
+  *not* a Sonos service, but a podcast is just an **RSS feed whose episodes are plain
+  HTTP audio URLs**. So the box can fetch the feed, pick the latest/next episode, and
+  hand its `.mp3`/`.aac` URL to Sonos via `play_uri()` — the speaker streams it itself.
+  A card → "the RSS URL for *Podcast X*". Open design bits: "latest vs. resume" per
+  card, and remembering playback position. Not a blocker.
+
+### Can the box play audio over Bluetooth later? (Pi Zero 2 W)
+
+- **Yes — the Pi Zero 2 W is powerful enough.** Built-in Bluetooth + quad-core CPU can
+  decode MP3/AAC/FLAC and stream to a BT speaker as an **A2DP source** (`bluez` +
+  `bluealsa`). [Phoniebox] does exactly this on Pi-Zero-class hardware.
+- **The limit is licensing, not CPU.** Local files, internet radio, and podcast RSS
+  audio can all go out over Bluetooth. **Apple Music cannot** (no headless Linux
+  client) — so BT output would be a radio/podcasts/local-files mode, never Apple Music.
+- Net: choosing the Pi Zero 2 W keeps the future Bluetooth-output option open with no
+  regret.
 
 ### Prior art worth studying
 
