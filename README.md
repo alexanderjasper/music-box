@@ -103,8 +103,8 @@ What runs the logic and talks to Sonos?
 
 ### 4. Buttons & controls **(DECIDED — see "Control scheme" below)**
 Settled on: **one push-rotary encoder per room** (push = arm/disarm, turn = that
-room's volume), **shuffle** + **repeat** toggle switches, and a **play** button.
-Still open within this: whether to add next/previous, and the exact mute behaviour.
+room's volume), **shuffle** + **repeat** toggle switches, **previous / play / next**
+buttons, and a **piezo buzzer** for audio feedback. Still open: mute behaviour.
 
 ### 5. Display: none vs. minimal **(open)**
 - None at all.
@@ -233,8 +233,9 @@ No general-purpose display. State is shown by the physical controls themselves
             │                               │      turn = that room's volume
             │  [ shuffle ]   [ repeat ]      │   <- toggle switches (visible state)
             │                               │
-            │          ( PLAY )              │   <- play / pause
+            │   (<<)   ( PLAY )   (>>)       │   <- previous · play/pause · next
             └──────────────────────────────┘
+                                              ((•)) piezo buzzer (audio feedback)
 ```
 
 - **One push-rotary encoder per room** (Alrum / Køkken / Grys værelse):
@@ -244,13 +245,24 @@ No general-purpose display. State is shown by the physical controls themselves
     part per room — fewer holes to print, less wiring than 6 volume buttons.
 - **Play** button: group the currently-armed rooms (SoCo `join`/`unjoin`) and play
   the favorite mapped to the card sitting on the spot. Press again = pause/resume.
+  - **If no room is armed, `play` does nothing** except sound a short **error beep**
+    (see buzzer below). No silent no-op, no surprise default room.
+- **Previous / Next** buttons: skip within the current queue (SoCo `previous()` /
+  `next()`). Some favorites are single tracks where skip won't apply — that's fine.
 - **Shuffle** and **Repeat** toggle switches: map to SoCo `play_mode`
   (NORMAL / SHUFFLE / REPEAT_ALL / SHUFFLE_NOREPEAT). Their physical position *is*
   the state indicator — no screen needed.
+- **Piezo buzzer (audio feedback):** a small piezo on a GPIO pin gives a screenless
+  device a voice. Yes, the Pi does this easily — a passive piezo + PWM can play tones,
+  an active one just beeps; it does **not** use the (absent) audio jack. Planned cues:
+  - card recognized → short rising chirp
+  - room armed / disarmed → soft click (arm) / lower click (disarm)
+  - play started → confirmation blip
+  - **error (e.g. play with no room armed, or unknown card) → low error buzz**
 - **Optional minimal display (later):** small OLED for track + elapsed/remaining
   time + a volume blip. Nice-to-have, not v1.
-- **Still open:** next/previous track controls; mute behaviour; what happens on
-  "play" when no room is armed (ignore? arm a default room?).
+- **Still open:** mute behaviour (e.g. push-and-hold a knob?); whether arming a room
+  while audio is already playing should hand it the current track or wait for next play.
 
 ---
 
@@ -282,7 +294,8 @@ No general-purpose display. State is shown by the physical controls themselves
 | Cards | NTAG215 stickers in printed holders | Cheap, batteryless, 100s scale |
 | Room control | 3× rotary encoder w/ push + LED | One per room: push = arm, turn = volume |
 | Mode switches | 2× toggle switch | Shuffle, repeat (position shows state) |
-| Play | 1× momentary button | Play / pause |
+| Transport | 3× momentary button | Previous, play/pause, next |
+| Audio feedback | 1× piezo buzzer (GPIO) | Chirps/clicks/error beep; no audio jack needed |
 | Display | SSD1306 OLED (optional, later) | Track + time only |
 | Power | USB-C | TBD |
 | Enclosure | 3D printed (Prusa Core One) | Card spot + encoders + switches |
@@ -347,5 +360,9 @@ Favorites in the Sonos app — they work the same way, just longer-playing.
   reachable later via RSS → direct audio URL, out of scope for v1's first cut.
 - **Card tech:** **NFC** (NTAG215 in printed cards + PN532 reader). See open question 1.
 - **Controls:** **one push-rotary encoder per room** (push = arm/disarm, turn = volume),
-  **shuffle** + **repeat** toggle switches, **play** button. No screen; control
-  positions/LEDs show state. See "Control scheme". Volume is per-room via the knobs.
+  **shuffle** + **repeat** toggle switches, **previous / play / next** buttons. No
+  screen; control positions/LEDs show state. Volume is per-room via the knobs.
+- **Play with no room armed:** do nothing except sound an **error beep**.
+- **Audio feedback:** add a **piezo buzzer** on a GPIO pin for card-recognized chirps,
+  arm/disarm clicks, play confirmation, and error beeps. Confirmed the Pi can drive
+  this directly (PWM tones / active beep) without using an audio output.
