@@ -84,21 +84,25 @@ How does the box recognize a card?
   more mechanical, more printing).
 - QR / barcode + camera (needs a camera + a little vision — heavier).
 
-### 2. The "brain" **(open)**
+### 2. The "brain" **(leaning Raspberry Pi — see findings)**
 What runs the logic and talks to Sonos?
-- **Raspberry Pi Zero 2 W** — runs Linux + Python, easiest Sonos integration
-  via the [SoCo](https://github.com/SoCo/SoCo) library, but boots slower and
-  draws more power.
-- **ESP32** — cheap, instant-on, low power, but Sonos control must be done over
-  raw UPnP/HTTP and config/web UI is more work.
+- **Raspberry Pi Zero 2 W** — runs Linux + Python, uses [SoCo] directly, hosts the
+  config web app easily. The findings make this the strong default: SoCo is the
+  proven, maintained path and needs a real OS. Boots slower / more power than an MCU,
+  but for an always-on box that's fine.
+- **ESP32** — cheap, instant-on, but would need raw UPnP reimplemented (no SoCo) and
+  the config web app is more work. Findings push this *down* the list.
 - Other (Pi 4/5, etc.) — overkill but flexible.
+
+[SoCo]: https://github.com/SoCo/SoCo
 
 ### 3. How we talk to Sonos **(open)**
 - **Local UPnP control** (SoCo) — no internet dependency, works on the LAN.
 - Sonos **favorites** as the unit of selection — easiest mapping target: a card
   → a Sonos favorite (which can be an album, playlist, or radio station).
-- Music sources we care about: which services? (Spotify? Apple Music? TuneIn /
-  internet radio? Local library?) **(open — need your list)**
+- Music sources we care about (**decided**, see findings below): **Apple Music**,
+  **DR radio + DR podcasts** (via the **DR LYD** Sonos service). Other services
+  can be added later. Podcasts beyond DR are a known gap — see findings.
 
 ### 4. Buttons & controls **(open)**
 Minimum viable set:
@@ -131,6 +135,82 @@ What can a card encode?
 
 ---
 
+## Technical findings: Sonos & Bluetooth (researched 2026-06-06)
+
+A research pass into how the box can actually drive speakers. Sources are linked
+at the bottom of this section.
+
+### Two fundamentally different speaker models
+
+This is the single most important realization, and it shapes the whole project:
+
+- **Sonos = the box is a _controller_.** Sonos speakers are networked players that
+  stream music *themselves* (directly from Apple Music's / DR's servers over your
+  Wi-Fi). The box only sends commands like "play favorite X on the kitchen
+  speaker." The box never touches the audio. This is lightweight, reliable, and
+  a great fit for a small always-on device.
+- **Bluetooth speaker = the box is the _audio source_.** A plain Bluetooth speaker
+  has no idea what Apple Music is. The box itself would have to fetch, decode, and
+  stream the audio over Bluetooth. That's a much heavier job — **and there is no
+  good way to play Apple Music from a headless Linux device** (no official API /
+  client). So **Bluetooth + Apple Music is effectively a dead end.** Bluetooth
+  could work for *local files, internet radio, and podcast RSS streams*, but not
+  our main source.
+
+**Implication:** scope **v1 to Sonos only** (controller model). Bluetooth output
+can be a *later, separate mode* limited to radio/podcasts/local files — not a
+drop-in for Apple Music. ([Phoniebox] does BT this way, with local/Spotify audio.)
+
+### How the box talks to Sonos
+
+- **Local control via [SoCo]** (Python, UPnP over the LAN) is the recommended path.
+  It is **actively maintained in 2026**, works on current Sonos S2 devices, and
+  needs **no cloud account and no internet** for the control commands themselves.
+- Sonos also has an **official cloud Control API**, but it requires OAuth + their
+  cloud and has been less reliable (and the `getFavorites` cloud endpoint is
+  reported as buggy). For an always-on local box, **local SoCo is the better bet.**
+- SoCo handles the things we need: play/pause, next/prev, volume, **speaker
+  grouping** (one or more speakers per action), and **listing/playing Sonos
+  Favorites**.
+
+### The Apple Music catch — and the workaround
+
+- Apple Music on Sonos is an **account-linked service** using Sonos's SMAPI. Starting
+  Apple Music playback *directly* by URI through SoCo / the API is **unreliable**
+  (Apple Music, Spotify, Amazon are all flagged with auth/playback issues).
+- **The robust pattern: Sonos Favorites.** You add the albums/playlists/stations you
+  want to **My Sonos → Favorites** *once* in the Sonos app. The box then lists those
+  favorites via SoCo and plays them by name. This sidesteps the broken
+  direct-playback path and works across services.
+- **Consequence for the card model:** each card maps to a **named Sonos Favorite**
+  (+ a target speaker/group). Setup flow = "add it to Sonos Favorites, then assign a
+  card to it" in our config web app. This scales fine to **100s of cards**.
+
+### DR radio & podcasts — good news
+
+- **DR LYD is a first-class Sonos music service** (Danish). It carries DR's **live
+  radio channels, on-demand shows, _and_ podcasts**. So DR radio *and* DR podcasts
+  are both reachable — save them as Sonos Favorites like anything else.
+- **Podcasts outside DR are a gap.** Apple **Podcasts** is *not* a Sonos service, so
+  non-DR podcasts can't be played the same way. Options if you want them later:
+  other podcast services that *are* on Sonos, or playing a podcast's RSS audio URL
+  directly. Noting this as a known limitation, not a v1 problem.
+
+### Prior art worth studying
+
+- **[Phoniebox] (RPi-Jukebox-RFID)** — mature Raspberry Pi + RFID jukebox; plug-and-play
+  over USB, *no soldering required*, supports web radio/podcasts/Spotify and BT output.
+  Great reference for the RFID + config-web-app + assembly approach, even though it
+  targets local/Spotify rather than Sonos.
+- **[zacharycohn/jukebox]** — a Raspberry Pi + NFC + **SoCo** Sonos jukebox. Closest to
+  our concept; maps NFC tags → playlists. Confirms the SoCo approach works.
+
+[SoCo]: https://github.com/SoCo/SoCo
+[Phoniebox]: https://github.com/MiczFlor/RPi-Jukebox-RFID
+[zacharycohn/jukebox]: https://github.com/zacharycohn/jukebox
+
+---
+
 ## Likely architecture (first hypothesis, to be challenged)
 
 > This is a starting point, **not** a committed decision.
@@ -138,8 +218,9 @@ What can a card encode?
 - **Raspberry Pi Zero 2 W** running Python.
 - **PN532 NFC reader** over SPI/I²C; cards are 3D-printed holders with an NFC
   sticker inside.
-- **[SoCo](https://github.com/SoCo/SoCo)** for local Sonos control; cards map to
-  **Sonos favorites**.
+- **[SoCo](https://github.com/SoCo/SoCo)** for local Sonos control; each card maps
+  to a **named Sonos Favorite** + target speaker/group (see findings above for why
+  Favorites, not direct Apple Music URIs).
 - A few **momentary push buttons** (play/pause, vol ±, next).
 - Optional **small OLED** for track + time.
 - A **local web app** (served from the Pi) for configuration: scan a card, pick
@@ -190,4 +271,17 @@ What can a card encode?
 
 ## Notes / decisions log
 
-_(We'll append dated decisions here as we lock them in.)_
+### 2026-06-06
+- **Music sources for v1:** Apple Music, DR radio, DR podcasts (DR radio + podcasts
+  both via the DR LYD Sonos service). Other services later.
+- **Card count:** must scale to **100s** of cards.
+- **Builder skill:** new to soldering/breadboarding but keen to learn → favor
+  solder-free / plug-together modules where possible (e.g. Phoniebox-style).
+- **Speaker target for v1:** **Sonos only** (controller model). Bluetooth output
+  deferred to a possible later mode, and noted as **incompatible with Apple Music**.
+- **Sonos control method:** local **SoCo** (UPnP, no cloud) is the chosen approach.
+- **Card → action model:** each card = a **named Sonos Favorite** + target speaker/group.
+  Pre-add content to Sonos Favorites once, then assign cards to favorites in config.
+- **Brain:** leaning **Raspberry Pi Zero 2 W** (needed for SoCo + web config).
+- **Known limitation:** non-DR podcasts (e.g. Apple Podcasts) aren't a Sonos service;
+  out of scope for v1.
