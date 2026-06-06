@@ -131,13 +131,19 @@ clockwise from counter-clockwise (relative steps → SoCo per-room volume). If y
 jitter on the breadboard, a small **0.1 µF cap from A→GND and B→GND** debounces it
 (optional; try without first).
 
-### Piezo buzzer (passive)
+### Piezo buzzer (KY-006 passive module)
+The KY-006 is a 3-pin passive buzzer module — wire two of them:
+
 ```
-   GPIO18 (pin 12) ──[ piezo ]── ground bus
+   S (signal) ── GPIO18 (pin 12)
+   −          ── ground bus
+   (middle pin: leave unconnected)
 ```
-A small **passive** piezo can be driven straight off GPIO18 (hardware PWM → tones). If
-it's too quiet, drive it through an NPN transistor (e.g. 2N2222: GPIO→1 kΩ→base,
-emitter→GND, collector→piezo→3V3) — not needed for v1.
+
+It's **passive**, so GPIO18's hardware PWM plays tones. A bare passive piezo element
+works the same way (one leg → GPIO18, other → GND). If it's too quiet, drive it through
+an NPN transistor (e.g. 2N2222: GPIO→1 kΩ→base, emitter→GND, collector→buzzer→3V3) —
+not needed for v1.
 
 ---
 

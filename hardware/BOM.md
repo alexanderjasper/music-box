@@ -10,8 +10,8 @@ display.
 > essentially every part below, cheaply, and ships from Germany to Denmark with **no
 > customs** (EU). A single BerryBase order covers the whole electronics build (specific SKUs chosen for the
 > controls — see items 6–8) for roughly **€55–75**. The **Buy** column lists BerryBase
-> first, with Danish shops as alternates if something's out of stock. Three picks still
-> need care — see the ⚠️ flags on the PSU, the piezo, and the PN532 (module, not HAT).
+> first, with Danish shops as alternates if something's out of stock. Two picks still
+> need care — see the ⚠️ flags on the PSU (≥2.5 A) and the PN532 (module, not HAT).
 
 > New to soldering? The **WH** board has its 40-pin header pre-soldered, so the Pi needs
 > none. Encoders, buttons, the buzzer and the NFC module still need a few solder joints
@@ -35,7 +35,7 @@ display.
 | 6 | **KY-040 rotary encoder** w/ breakout (6 mm knurled shaft, with thread & nut) | 5 | €1.60 ea | [BerryBase](https://www.berrybase.de/en/rotary-encoder-with-breakout-board) | One volume knob per room slot (3 used + 2 spare). 20 pulses/rev, onboard pull-ups, threaded bushing for panel mount. Pins CLK(A)/DT(B)/SW/+/GND — we use CLK, DT, GND (ignore SW). Print the knobs. |
 | 7 | **DSQ14 latching push-switch**, square 14×14 mm (push-on/push-off) | 7 | from €0.77 ea | [BerryBase](https://www.berrybase.de/druckschalter-quadratisch-schliesser) | 5 room-arm + shuffle + repeat. **Latching** (2-position, *rastend*) — the cap **stays pressed in when active**, so position *is* the state (no LED) and it holds across power-off. 12 mm panel hole, SPST-NO (closed when in → active-LOW, matches `WIRING.md`). Fixed cap: label with a sticker / print a thin symbol cap. |
 | 8 | **Mikro-Drucktaster 12 mm round**, momentary | 3 | ~€0.50 ea | [BerryBase](https://www.berrybase.de/en/micro-push-button-12mm-round-pcb-mounting-no-contact/) | Previous / play-pause / next — **momentary** (*Schließer*, springs back). Comes in colours (give Play a distinct one + a printed combined ▶❚❚ cap). |
-| 9 | **Passive piezo buzzer** ⚠️ | 1 | €1–3 | [BerryBase (signal transmitters)](https://www.berrybase.de/en/components/active-components/signal-transmitter/) · [arduinotech (passive 5V)](https://arduinotech.dk/shop/buzzer-passiv-5v/) | Audio feedback (chirps/error). ⚠️ Get a **passive** piezo (PWM plays tones) — *not* an "active" fixed-tone beeper nor a DIP-switch "16 tones" module. |
+| 9 | **KY-006 passive buzzer module** | 1 | €1.10 | [BerryBase](https://www.berrybase.de/ky-006-passives-buzzer-modul) | Audio feedback (chirps/error). **Passive** (PWM plays tones), 3-pin module: **S → GPIO18**, **− → GND** (middle pin unused). Beginner-friendly. *Not* the active "Signalgeber" / "16 tones" types, which only play one fixed tone. |
 
 ## Wiring & passives
 
