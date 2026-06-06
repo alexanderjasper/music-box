@@ -284,6 +284,21 @@ drop-in for Apple Music. ([Phoniebox] does BT this way, with local/Spotify audio
 
 ## Notes / decisions log
 
+### 2026-06-06 — Sonos spike VALIDATED ✅
+Ran `software/spike_sonos.py` against the real speakers. All three commands
+worked first try:
+- **Discovery** found 3 speakers: `Alrum`, `Grys værelse`, `Køkken`.
+- **Favorites** listed 17 Sonos Favorites (mix of Apple Music tracks, DR /
+  Sonos Radio, kids' content).
+- **Play** started an **Apple Music** favorite ("Bohemian Rhapsody") on `Køkken`.
+
+**Conclusion:** the core control assumption holds. Apple Music playback via
+Sonos Favorites + local SoCo works end to end. Biggest project risk is retired.
+
+Follow-up note: today's favorites are mostly individual *tracks*. For the real
+device we'll want to also save *albums / playlists / radio stations* as
+Favorites in the Sonos app — they work the same way, just longer-playing.
+
 ### 2026-06-06
 - **Music sources for v1:** Apple Music, DR radio, DR podcasts (DR radio + podcasts
   both via the DR LYD Sonos service). Other services later.
