@@ -1,0 +1,8 @@
+{
+  "_comment": "card id -> a substring of the Sonos Favorite title to play. Copy this to cards.json and edit. The card id stands in for an NFC tag UID.",
+  "bohemian": "Bohemian Rhapsody",
+  "chill": "Instrumental Chill Lounge",
+  "godnat": "Godnathistorier",
+  "stjerner": "Under Stjernerne",
+  "radio": "Discover Sonos Radio"
+}
