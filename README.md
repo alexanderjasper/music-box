@@ -113,18 +113,18 @@ on the box. No dedicated mute (disarm a room, or turn its knob to zero).
 - Minimal: small OLED / e-ink showing track name + elapsed/remaining time +
   volume. Nice-to-have, not required for v1.
 
-### 6. Configuration interface **(open)**
-- Small **web app** served by the box on the LAN (open a page, see detected
-  cards, assign each to a Sonos favorite). Works from any device.
-- **Bluetooth** companion flow (more app-like, more work).
-- Web app is the likely default; it's the least effort and most flexible.
+### 6. Configuration interface **(DECIDED: LAN web app with live card enrollment)**
+A small **web app served by the box** on the LAN (`musicbox.local`), opened from any
+phone/laptop. It lists your **Sonos Favorites live** (via SoCo) and lets you bind a card
+by simply **placing it on the box's own NFC spot** — the PN532 reads the UID and the page
+captures it. See "Card configuration" below for the full flow. No Bluetooth flow for v1.
 
-### 7. Card ↔ action model **(open)**
-What can a card encode?
-- A specific favorite (album/playlist/station).
-- A target speaker or group.
-- A "mood" that maps to a rotating set.
-- Just an ID; all meaning lives in the box's config (most flexible).
+### 7. Card ↔ action model **(DECIDED: card = a named Sonos Favorite, content only)**
+A card stores **just the favorite** (its NFC UID → favorite name in the box config).
+**Rooms and volume are chosen live** with the panel buttons/knobs each time, not baked
+into the card — so cards stay interchangeable. (Considered and deferred: "scene" cards
+that also remember rooms/mode/volume. The data model leaves room to add optional defaults
+later without breaking existing cards.)
 
 ### 8. Power **(open)**
 - USB-C wall power (simplest).
@@ -285,6 +285,39 @@ future-proofing; the Pi's GPIO comfortably fits it — see the BOM's pin budget.
 
 ---
 
+## Card configuration (decided 2026-06-06)
+
+How you assign a physical card to music **after the box is built** — using only the
+hardware already in the box (no extra reader, no writing to the tags).
+
+**Config file** — the box keeps a map keyed by each tag's factory **NFC UID**:
+
+```jsonc
+{
+  "04A2B3C4D5E6": { "favorite": "Bohemian Rhapsody" },
+  "04F1029384AB": { "favorite": "DR P6 Beat" }
+}
+```
+
+The name written/printed on the card is purely for humans; the box matches on UID.
+(Today's `software/cards.json` is keyed by the written name as a stand-in — same shape;
+the UID replaces the key on real hardware.)
+
+**Enrollment flow** (the web simulator we built grows into this):
+
+1. Open **`musicbox.local`** from a phone/laptop on the same Wi-Fi.
+2. The page lists your **Sonos Favorites live** (via SoCo) — albums, playlists, DR LYD
+   stations/podcasts you've saved in the Sonos app.
+3. **Place the card on the box's NFC spot.** The PN532 reads its UID; the page shows
+   *"new card detected"* (or, if already mapped, its current favorite).
+4. **Pick a favorite → Save.** Write the name on the card, drop it in the deck.
+
+**Disambiguation** — placing a card normally **plays** it; the box only treats a tap as
+*enrollment* while the config page's "Add card" mode is active. No mode switch or extra
+button on the box itself. Re-assigning a card = place it, the page shows its current
+mapping, change it. Bulk enrollment is just tapping through the stack a few seconds each
+(fine for 100s, since each card is a unique object anyway).
+
 ## Likely architecture (first hypothesis, to be challenged)
 
 > This is a starting point, **not** a committed decision.
@@ -379,6 +412,14 @@ handwritten cards. Drives the real Sonos.*
 ---
 
 ## Notes / decisions log
+
+### 2026-06-06 — Card configuration: UID-keyed, enrolled on the box itself
+Cards are configured via the **box's own LAN web app**: it lists Sonos Favorites live,
+and you bind a card by **placing it on the box's NFC spot** (the PN532 reads the factory
+UID — nothing is written to the tag). Config is a `UID → favorite` map. A card stores
+**only the favorite** (content); **rooms and volume stay live** on the panel, so cards
+are interchangeable. Considered "scene" cards (card remembers rooms/mode/volume) and
+deferred — the schema can gain optional defaults later without breaking existing cards.
 
 ### 2026-06-06 — Five room slots (future-proofing)
 The panel is built for **5 rooms**, not the 3 speakers we own today, so adding speakers
