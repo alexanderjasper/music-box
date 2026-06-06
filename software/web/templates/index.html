@@ -93,9 +93,11 @@
           box-shadow: 0 4px 0 #b3a78f, 0 7px 11px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.6);
           transition: transform .07s, box-shadow .07s, background .12s, color .12s; }
   .pbtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b3a78f, 0 3px 6px rgba(0,0,0,.4); }
-  .pbtn.on { color: #3a1c0a; background: radial-gradient(circle at 42% 30%, #ffb37a, var(--accent) 85%);
-             box-shadow: 0 4px 0 #b8501c, 0 0 18px rgba(245,113,44,.55), inset 0 1px 0 rgba(255,255,255,.4); }
-  .pbtn.on:active { transform: translateY(3px); box-shadow: 0 1px 0 #b8501c, 0 0 14px rgba(245,113,44,.5); }
+  /* latching push-toggle: when armed the cap stays pressed IN (no LED) */
+  .pbtn.on { transform: translateY(4px); color: #2c2723;
+             background: linear-gradient(#cdc2ab, #b9ad94);
+             box-shadow: 0 0 0 #b3a78f, inset 0 3px 7px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.18); }
+  .pbtn.on:active { transform: translateY(4px); }
 
   /* 3D-PRINTED symbol button: dark printed cap, symbol raised in a 2nd colour */
   .btn3d { width: 56px; height: 50px; border: none; border-radius: 13px; cursor: pointer; padding: 0; position: relative;
@@ -108,7 +110,9 @@
   .btn3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #0d0d10, 0 3px 6px rgba(0,0,0,.5); }
   /* the symbol: a different colour, sitting proud of the cap */
   .btn3d .icon { color: #f0e8d7; filter: drop-shadow(0 1.6px 0 rgba(0,0,0,.55)) drop-shadow(0 -0.6px 0 rgba(255,255,255,.3)); }
-  .btn3d.on .icon { color: var(--accent); filter: drop-shadow(0 1.6px 0 rgba(0,0,0,.55)) drop-shadow(0 0 7px rgba(245,113,44,.75)); }
+  /* when active the cap is pressed IN and the raised symbol turns orange */
+  .btn3d.on { transform: translateY(4px); box-shadow: 0 0 0 #0d0d10, inset 0 3px 8px rgba(0,0,0,.66); }
+  .btn3d.on .icon { color: var(--accent); filter: drop-shadow(0 1px 0 rgba(0,0,0,.5)); }
 
   .icon { width: 24px; height: 24px; display: block; }
 
@@ -129,7 +133,6 @@
   .dial .cap .pointer { position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
                         width: 4px; height: 15px; border-radius: 2px; background: #efe9dd;
                         box-shadow: 0 0 3px rgba(0,0,0,.6); } /* rotates with the knob */
-  .room-col.armed .dial { box-shadow: 0 0 0 2px var(--accent), 0 0 16px rgba(245,113,44,.5), inset 0 0 0 1px #0b0b0d; }
 
   /* mode buttons */
   .modes { display: flex; justify-content: center; gap: 28px; margin-bottom: 26px; }
@@ -151,7 +154,6 @@
   .tbtn.play .icon { width: 30px; height: 30px; color: #fff;
                      filter: drop-shadow(0 1.6px 0 rgba(140,55,15,.7)) drop-shadow(0 -0.6px 0 rgba(255,255,255,.4)); }
   .tbtn.play:active { box-shadow: 0 1px 0 #b8501c, 0 4px 8px rgba(245,113,44,.4); }
-  .tbtn.play.playing { box-shadow: 0 4px 0 #b8501c, 0 0 0 3px rgba(245,113,44,.35), 0 8px 14px rgba(245,113,44,.5); }
 
   /* footer: buzzer grille + message */
   .footer { width: 480px; max-width: 100%; margin-top: 16px; display: flex; align-items: center; gap: 12px; }
@@ -167,18 +169,16 @@
   /* the card rack (your deck of physical cards) */
   .rack-title { margin: 30px 0 10px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #6f685b; }
   .rack { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 520px; }
-  .rcard { width: 104px; height: 70px; border-radius: 9px; padding: 9px 10px; cursor: pointer;
-           background: linear-gradient(135deg, #f7f2e9, #e6ddcc); color: var(--ink);
+  .rcard { width: 140px; min-height: 88px; border-radius: 10px; padding: 12px 14px; cursor: pointer;
+           background: linear-gradient(135deg, #f7f2e9, #e6ddcc); color: #2c2723;
            border: 1px solid #cdbfa6; box-shadow: 0 4px 9px rgba(0,0,0,.4);
-           display: flex; flex-direction: column; gap: 3px; position: relative; overflow: hidden;
-           transition: transform .1s, box-shadow .1s; }
+           display: flex; align-items: center; justify-content: center; text-align: center;
+           position: relative; overflow: hidden; transition: transform .1s, box-shadow .1s; }
   .rcard::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: #c7baa2; }
   .rcard:hover { transform: translateY(-3px); }
   .rcard.active { box-shadow: 0 0 0 2px var(--accent), 0 8px 16px rgba(0,0,0,.5); transform: translateY(-3px); }
   .rcard.active::before { background: var(--accent); }
-  .rcard .cid { font-family: var(--hand); font-weight: 600; font-size: 17px; color: #2c2723; }
-  .rcard .cfav { font-family: var(--hand); font-size: 13px; color: #8a8275; line-height: 1.25; }
-  .rcard:nth-child(2) { transform: rotate(-1deg); } .rcard:nth-child(3) { transform: rotate(1.2deg); }
+  .rcard .cid { font-family: var(--hand); font-weight: 600; font-size: 20px; line-height: 1.15; }
   .hint { color: #5f594e; font-size: 11.5px; margin-top: 22px; max-width: 480px; text-align: center; }
 </style>
 </head>
@@ -231,13 +231,12 @@
   <div class="rack" id="rack"></div>
 
   <div class="hint">A simulator of the physical box — the same logic runs on the Pi.
-    Flip a switch to arm a room, drag a knob up/down to set its volume, click a card to place it on the tray.</div>
+    Press a room/mode button to latch it in (active), drag a knob up/down to set volume, click a card to place it on the tray.</div>
 
 <script>
 const CUES = {{ cues|safe }};
 let actx = null, currentCard = null, activeDragRoom = null;
 
-const same = (a, b) => (a || "").trim().toLowerCase() === (b || "").trim().toLowerCase();
 const angleFor = v => (-135 + (v / 100) * 270) + "deg";
 
 // Click-and-drag a knob vertically: drag up = louder. The pointer rotates live;
@@ -333,8 +332,7 @@ function buildRack(cards) {
   Object.keys(cards).forEach(id => {
     const el = document.createElement("div");
     el.className = "rcard"; el.dataset.card = id;
-    const sub = same(id, cards[id]) ? "" : `<span class="cfav">${cards[id]}</span>`;
-    el.innerHTML = `<span class="cid">${id}</span>${sub}`;
+    el.innerHTML = `<span class="cid">${id}</span>`;  // card shows its name (the JSON key) only
     el.addEventListener("click", () => act(currentCard === id ? "remove_card" : "place_card", { card: id }));
     rack.appendChild(el);
   });
@@ -359,14 +357,14 @@ function render(state) {
   document.getElementById("shuffle").classList.toggle("on", !!state.shuffle);
   document.getElementById("repeat").classList.toggle("on", !!state.repeat);
 
-  // Fixed printed symbol — a real molded button can't change. State shows via the LED glow.
-  document.getElementById("play").classList.toggle("playing", !!state.playing);
+  // Play/pause is a momentary button with a fixed printed symbol — no state shown on
+  // the box itself (you hear whether music is playing). Footer message is dev-only.
 
   const tray = document.getElementById("tray");
   tray.classList.toggle("filled", !!state.current_card);
   if (state.current_card) {
-    tray.querySelector(".cid").textContent = state.current_card;
-    tray.querySelector(".cfav").textContent = same(state.current_card, state.card_target) ? "" : (state.card_target || "");
+    tray.querySelector(".cid").textContent = state.current_card;  // key only, no favorite value
+    tray.querySelector(".cfav").textContent = "";
   }
   document.querySelectorAll(".rcard").forEach(c =>
     c.classList.toggle("active", c.dataset.card === state.current_card));
