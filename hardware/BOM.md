@@ -24,7 +24,7 @@ listings. Quantities are for the agreed design: 3 rooms, NFC cards, no display.
 | # | Part | Qty | ≈ DKK | Notes |
 |---|------|-----|------|-------|
 | 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 3 | 10–25 ea | One volume knob per room. Relative (no analog pin needed). Print the knobs. |
-| 7 | **Illuminated momentary push-button** (16 mm, 5V LED) | 5 | 20–40 ea | 3 room-arm + shuffle + repeat. LED = armed/active. Momentary (state lives in software). |
+| 7 | **Latching push-button** (push-on/push-off, ~16 mm) | 5 | 15–35 ea | 3 room-arm + shuffle + repeat. The cap **stays pressed in when active** — no LED needed; position *is* the state. Also: holds state across power-off, so the box remembers your selection. |
 | 8 | **Momentary push-button** (12–16 mm) | 3 | 10–20 ea | Previous / play-pause / next. (Play gets a printed combined ▶❚❚ cap.) |
 | 9 | **Passive piezo buzzer** | 1 | 5–15 | Audio feedback (chirps/error). *Passive* so PWM can play tones — not an active beeper. |
 
@@ -35,7 +35,7 @@ listings. Quantities are for the agreed design: 3 rooms, NFC cards, no display.
 | 10 | Breadboard (830-point) | 1 | 30–60 | Prototype before soldering. |
 | 11 | Jumper wires (M-F, M-M, F-F kit) | 1 | 40–60 | For breadboarding and Pi connections. |
 | 12 | Hook-up / silicone wire (thin, ~26 AWG) | 1 | 40 | For the final soldered build. |
-| 13 | Resistors: 220–330 Ω (for LEDs) + assortment | 1 kit | 40–60 | One per button LED. Buttons use the Pi's internal pull-ups (no resistor needed). |
+| 13 | (Optional) Resistor assortment | 1 kit | 40–60 | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
 | 14 | (Optional) Pi Zero proto/HAT board | 1 | 30–60 | Tidy permanent wiring instead of loose solder. |
 
 ## Tools (if you don't have them)
@@ -83,15 +83,17 @@ Price comparison for the Pi: **[PriceRunner](https://www.pricerunner.dk/pl/10012
 
 ## Does it fit the Pi? (GPIO budget)
 
-The Pi Zero 2 W has 26 usable GPIO. This design needs **~22** — it fits, no expander:
+The Pi Zero 2 W has 26 usable GPIO. With latching buttons (no LEDs) this design needs
+only **~17** — plenty of headroom:
 
 | Function | Pins | Suggested BCM (finalise at wiring) |
 |----------|------|-----------------------------------|
 | PN532 (I²C) | 2 | GPIO2 (SDA), GPIO3 (SCL) |
 | 3× encoder (A/B) | 6 | 17/27, 22/23, 24/25 |
-| 8× button (3 room, 2 mode, 3 transport) | 8 | 5, 6, 13, 19, 26, 16, 20, 21 |
-| 5× LED (room + mode illumination) | 5 | 12, 4, 7, 8, 9 |
+| 5× latching button (3 room, 2 mode) | 5 | 5, 6, 13, 19, 26 |
+| 3× momentary button (transport) | 3 | 16, 20, 21 |
 | Piezo buzzer (PWM) | 1 | GPIO18 (hardware PWM) |
 
-(Buttons use internal pull-ups; LEDs each get a ~220–330 Ω resistor. A full wiring
-diagram is the next hardware doc.)
+(All buttons use internal pull-ups — no resistors. Latching buttons mean their GPIO
+level directly reflects armed/active state, and the Pi reads them at boot. A full
+wiring diagram is the next hardware doc.)
