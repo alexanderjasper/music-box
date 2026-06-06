@@ -348,7 +348,7 @@ mapping, change it. Bulk enrollment is just tapping through the stack a few seco
 
 | Part | Candidate | Notes |
 |------|-----------|-------|
-| Compute | Raspberry Pi Zero 2 W | Chosen — needs an OS for SoCo + web config |
+| Compute | Raspberry Pi Zero **WH** (or Zero 2 WH) | Needs an OS for SoCo + web config. Original Zero W is fine for Sonos-only; Zero 2's quad-core only matters if the Pi later plays Bluetooth audio itself. Swappable later. |
 | Card reader | PN532 (I²C/SPI) | NFC; PN532 preferred over RC522 for interface flexibility |
 | Cards | NTAG215 stickers in printed holders | Cheap, batteryless, 100s scale |
 | Room arm | 5× latching push-button | One per room slot (3 used + 2 spare); label on cap; stays pressed in when armed (no LED) |
@@ -419,6 +419,17 @@ handwritten cards. Drives the real Sonos.*
 ---
 
 ## Notes / decisions log
+
+### 2026-06-06 — Pi board: original Zero W accepted (Sonos-only); BerryBase sourcing
+The Zero 2 W was hard to find in stock, so we accepted the **original Pi Zero WH**
+(single-core, header pre-soldered) for v1 — its CPU is plenty for the **Sonos-controller**
+workload (SoCo sends commands; the speakers stream). The quad-core Zero 2 only matters for
+the deferred "Pi plays Bluetooth audio itself" idea, and the board is **swappable later**
+(identical 40-pin header, SD card moves over) so it's no lock-in. Sourcing consolidated to
+**[BerryBase.de](https://www.berrybase.de/en/)** as a single EU order (ships to DK, no
+customs); see [`hardware/BOM.md`](hardware/BOM.md). Watch-outs captured there: PSU must be
+**≥2.5 A** (not 1 A), buttons must be **latching/rastend** (not momentary), piezo must be
+**passive**, and use the PN532 **module** (not the HAT, which would occupy our GPIO header).
 
 ### 2026-06-06 — Card configuration: UID-keyed, enrolled on the box itself
 Cards are configured via the **box's own LAN web app**: it lists Sonos Favorites live,
