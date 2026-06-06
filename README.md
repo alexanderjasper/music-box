@@ -104,7 +104,8 @@ What runs the logic and talks to Sonos?
 ### 4. Buttons & controls **(DECIDED — see "Control scheme" below)**
 Settled on: **one push-rotary encoder per room** (push = arm/disarm, turn = that
 room's volume), **shuffle** + **repeat** toggle switches, **previous / play / next**
-buttons, and a **piezo buzzer** for audio feedback. Still open: mute behaviour.
+buttons, and a **piezo buzzer** for audio feedback. No dedicated mute (untoggle a
+room or turn its knob to zero).
 
 ### 5. Display: none vs. minimal **(open)**
 - None at all.
@@ -261,8 +262,10 @@ No general-purpose display. State is shown by the physical controls themselves
   - **error (e.g. play with no room armed, or unknown card) → low error buzz**
 - **Optional minimal display (later):** small OLED for track + elapsed/remaining
   time + a volume blip. Nice-to-have, not v1.
-- **Still open:** mute behaviour (e.g. push-and-hold a knob?); whether arming a room
-  while audio is already playing should hand it the current track or wait for next play.
+- **Mute:** no dedicated control — the existing controls cover both intents.
+  Untoggle a room (`unjoin`, stops it) or turn its knob to zero (stays grouped, silent).
+- **Still open:** whether arming a room while audio is already playing should hand it
+  the current track immediately or wait for the next play.
 
 ---
 
