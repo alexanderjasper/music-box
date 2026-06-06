@@ -102,10 +102,10 @@ What runs the logic and talks to Sonos?
   can be added later. Podcasts beyond DR are a known gap — see findings.
 
 ### 4. Buttons & controls **(DECIDED — see "Control scheme" below)**
-Settled on: **one push-rotary encoder per room** (push = arm/disarm, turn = that
-room's volume), **shuffle** + **repeat** toggle switches, **previous / play / next**
-buttons, and a **piezo buzzer** for audio feedback. No dedicated mute (untoggle a
-room or turn its knob to zero).
+Settled on, per room: a **latching toggle switch** (arm/disarm) **and** a separate
+**volume knob** (rotary encoder). Plus **shuffle** + **repeat** toggle switches,
+**previous / play / next** buttons, and a **piezo buzzer** for audio feedback. No
+dedicated mute (flip a room off, or turn its knob to zero).
 
 ### 5. Display: none vs. minimal **(open)**
 - None at all.
@@ -229,21 +229,25 @@ No general-purpose display. State is shown by the physical controls themselves
             ┌──────────────────────────────┐
             │   ·  place card here  ·       │   <- NFC "spot"
             │                               │
-            │   (O)      (O)      (O)        │   <- one rotary encoder per room
-            │  Alrum    Køkken   Grys        │      push = arm/disarm that room
-            │                               │      turn = that room's volume
-            │  [ shuffle ]   [ repeat ]      │   <- toggle switches (visible state)
+            │   |ON    |ON    |ON           │   <- room toggle switch (up = armed)
+            │   (O)    (O)    (O)            │   <- room volume knob (turn only)
+            │  Alrum  Køkken  Grys           │
+            │  [ shuffle ]   [ repeat ]      │   <- mode toggle switches
             │                               │
             │   (<<)   ( PLAY )   (>>)       │   <- previous · play/pause · next
             └──────────────────────────────┘
                                               ((•)) piezo buzzer (audio feedback)
 ```
 
-- **One push-rotary encoder per room** (Alrum / Køkken / Grys værelse):
-  - **Push** = arm/disarm that room (an LED in/near the knob shows armed state).
-  - **Turn** = set that room's volume directly (SoCo `speaker.volume`).
-  - Keeps true per-room volume while collapsing "select + volume" into one tactile
-    part per room — fewer holes to print, less wiring than 6 volume buttons.
+- **Per room (Alrum / Køkken / Grys værelse): a latching toggle switch + a volume knob,
+  as two separate controls.**
+  - **Toggle switch** = arm/disarm that room. Its physical position *is* the armed
+    indicator — flipped up = in the group. No LED or screen needed.
+  - **Volume knob** = that room's volume. A **rotary encoder** (relative, "turn up/down")
+    rather than a potentiometer, because the Pi has no analog input — an encoder reads
+    cleanly over GPIO. Maps to SoCo per-room volume.
+  - (Earlier we considered one push-rotary encoder doing both; separated on 2026-06-06
+    so each control does one obvious thing and arming is visible.)
 - **Play** button: group the currently-armed rooms (SoCo `join`/`unjoin`) and play
   the favorite mapped to the card sitting on the spot. Press again = pause/resume.
   - **If no room is armed, `play` does nothing** except sound a short **error beep**
@@ -263,7 +267,7 @@ No general-purpose display. State is shown by the physical controls themselves
 - **Optional minimal display (later):** small OLED for track + elapsed/remaining
   time + a volume blip. Nice-to-have, not v1.
 - **Mute:** no dedicated control — the existing controls cover both intents.
-  Untoggle a room (`unjoin`, stops it) or turn its knob to zero (stays grouped, silent).
+  Flip a room's switch off (`unjoin`, stops it) or turn its knob to zero (stays grouped, silent).
 - **Still open:** whether arming a room while audio is already playing should hand it
   the current track immediately or wait for the next play.
 
@@ -295,7 +299,8 @@ No general-purpose display. State is shown by the physical controls themselves
 | Compute | Raspberry Pi Zero 2 W | Chosen — needs an OS for SoCo + web config |
 | Card reader | PN532 (I²C/SPI) | NFC; PN532 preferred over RC522 for interface flexibility |
 | Cards | NTAG215 stickers in printed holders | Cheap, batteryless, 100s scale |
-| Room control | 3× rotary encoder w/ push + LED | One per room: push = arm, turn = volume |
+| Room arm | 3× latching toggle switch | One per room; switch position = armed state |
+| Room volume | 3× rotary encoder | One per room; relative (no ADC needed on the Pi) |
 | Mode switches | 2× toggle switch | Shuffle, repeat (position shows state) |
 | Transport | 3× momentary button | Previous, play/pause, next |
 | Audio feedback | 1× piezo buzzer (GPIO) | Chirps/clicks/error beep; no audio jack needed |
@@ -331,6 +336,13 @@ No general-purpose display. State is shown by the physical controls themselves
 ---
 
 ## Notes / decisions log
+
+### 2026-06-06 — Control revision: separate arm switch from volume knob
+Superseded the "one push-rotary encoder does both" idea. Per room there are now
+**two** controls: a **latching toggle switch** to arm/disarm (position shows state)
+and a **separate volume knob** (rotary encoder). Reason: each control does one
+obvious thing, and arming is visibly indicated without relying on a hidden "push the
+knob" gesture. Costs a few more panel holes; worth it for clarity.
 
 ### 2026-06-06 — Sonos spike VALIDATED ✅
 Ran `software/spike_sonos.py` against the real speakers. All three commands
