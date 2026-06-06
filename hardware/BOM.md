@@ -3,7 +3,8 @@
 Everything needed to build the Music Box, with Danish/EU sources. You already have
 the **3D printer + filament**, so all knobs, button caps and the enclosure are
 printed (free). Prices are indicative (DKK, incl. VAT) and will vary — check current
-listings. Quantities are for the agreed design: 3 rooms, NFC cards, no display.
+listings. Quantities are for the agreed design: **up to 5 rooms** (3 speakers today + 2
+spare slots for future expansion), NFC cards, no display.
 
 > New to soldering? You'll need a basic iron (see "Tools"). Encoders, buttons, the
 > buzzer and the NFC module all need a few solder joints. Start on a **breadboard**
@@ -23,8 +24,8 @@ listings. Quantities are for the agreed design: 3 rooms, NFC cards, no display.
 
 | # | Part | Qty | ≈ DKK | Notes |
 |---|------|-----|------|-------|
-| 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 3 | 10–25 ea | One volume knob per room. Relative (no analog pin needed). Print the knobs. |
-| 7 | **Latching push-button** (push-on/push-off, ~16 mm) | 5 | 15–35 ea | 3 room-arm + shuffle + repeat. The cap **stays pressed in when active** — no LED needed; position *is* the state. Also: holds state across power-off, so the box remembers your selection. |
+| 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 5 | 10–25 ea | One volume knob per room slot (3 used + 2 spare). Relative (no analog pin needed). Print the knobs. |
+| 7 | **Latching push-button** (push-on/push-off, ~16 mm) | 7 | 15–35 ea | 5 room-arm + shuffle + repeat. The cap **stays pressed in when active** — no LED needed; position *is* the state. Also: holds state across power-off, so the box remembers your selection. |
 | 8 | **Momentary push-button** (12–16 mm) | 3 | 10–20 ea | Previous / play-pause / next. (Play gets a printed combined ▶❚❚ cap.) |
 | 9 | **Passive piezo buzzer** | 1 | 5–15 | Audio feedback (chirps/error). *Passive* so PWM can play tones — not an active beeper. |
 
@@ -83,17 +84,18 @@ Price comparison for the Pi: **[PriceRunner](https://www.pricerunner.dk/pl/10012
 
 ## Does it fit the Pi? (GPIO budget)
 
-The Pi Zero 2 W has 26 usable GPIO. With latching buttons (no LEDs) this design needs
-only **~17** — plenty of headroom:
+The Pi Zero 2 W has 26 usable GPIO. With 5 room slots and latching buttons (no LEDs)
+this design needs **23** — it fits, with 3 pins to spare:
 
 | Function | Pins | Suggested BCM (finalise at wiring) |
 |----------|------|-----------------------------------|
 | PN532 (I²C) | 2 | GPIO2 (SDA), GPIO3 (SCL) |
-| 3× encoder (A/B) | 6 | 17/27, 22/23, 24/25 |
-| 5× latching button (3 room, 2 mode) | 5 | 5, 6, 13, 19, 26 |
-| 3× momentary button (transport) | 3 | 16, 20, 21 |
+| 5× encoder (A/B) | 10 | 17/27, 22/23, 24/25, 12/16, 20/21 |
+| 7× latching button (5 room, 2 mode) | 7 | 4, 5, 6, 13, 19, 26, 7 |
+| 3× momentary button (transport) | 3 | 8, 9, 10 |
 | Piezo buzzer (PWM) | 1 | GPIO18 (hardware PWM) |
 
 (All buttons use internal pull-ups — no resistors. Latching buttons mean their GPIO
-level directly reflects armed/active state, and the Pi reads them at boot. A full
-wiring diagram is the next hardware doc.)
+level directly reflects armed/active state, and the Pi reads them at boot. The 5 room
+slots cover the 3 current speakers plus 2 for future expansion. A full wiring diagram
+is the next hardware doc.)

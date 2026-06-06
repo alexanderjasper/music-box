@@ -227,20 +227,25 @@ No general-purpose display. State is shown by the physical controls themselves
 (a toggle's position, an encoder's LED) rather than a screen.
 
 ```
-            ┌──────────────────────────────┐
-            │   ·  place card here  ·       │   <- NFC "spot"
-            │                               │
-            │  [Alrum][Køkken][Grys]         │   <- room button (label on cap; stays pressed in when armed)
-            │   (O)    (O)    (O)            │   <- room volume knob (turn only)
-            │   [⤬]        [↻]               │   <- shuffle / repeat symbol buttons
-            │                               │
-            │   (<<)   ( PLAY )   (>>)       │   <- previous · play/pause · next
-            └──────────────────────────────┘
-                                              ((•)) piezo buzzer (audio feedback)
+            ┌──────────────────────────────────────┐
+            │   ·  place card here  ·               │   <- NFC "spot"
+            │                                       │
+            │  [Alrum][Køkken][Grys][ - ][ - ]      │   <- 5 room buttons (label on cap; pressed in when armed)
+            │   (O)    (O)    (O)   (O)  (O)         │   <- 5 room volume knobs (turn only)
+            │   [⤬]        [↻]                       │   <- shuffle / repeat symbol buttons
+            │                                       │
+            │   (<<)   ( PLAY )   (>>)               │   <- previous · play/pause · next
+            └──────────────────────────────────────┘
+                                                      ((•)) piezo buzzer (audio feedback)
 ```
 
-- **Per room (Alrum / Køkken / Grys værelse): an illuminated press button + a volume
-  knob, as two separate controls.**
+The box has **5 room slots** even though we run 3 Sonos speakers today — the two
+spare button/knob pairs sit unlabelled until you add more speakers, then you just
+label the cap and map the button to the new room in config. (Five was chosen for
+future-proofing; the Pi's GPIO comfortably fits it — see the BOM's pin budget.)
+
+- **Per room (5 slots; Alrum / Køkken / Grys værelse + 2 spare): a press button + a
+  volume knob, as two separate controls.**
   - **Room button** = arm/disarm that room. The room's own label is on the cap
     (printed or hand-applied — the box ships unlabelled). It is a **latching push-button
     (push-on/push-off)** — the cap **stays pressed in when armed**, so its physical
@@ -306,8 +311,8 @@ No general-purpose display. State is shown by the physical controls themselves
 | Compute | Raspberry Pi Zero 2 W | Chosen — needs an OS for SoCo + web config |
 | Card reader | PN532 (I²C/SPI) | NFC; PN532 preferred over RC522 for interface flexibility |
 | Cards | NTAG215 stickers in printed holders | Cheap, batteryless, 100s scale |
-| Room arm | 3× latching push-button | Label on cap; stays pressed in when armed (no LED) |
-| Room volume | 3× rotary encoder | One per room; relative (no ADC needed on the Pi) |
+| Room arm | 5× latching push-button | One per room slot (3 used + 2 spare); label on cap; stays pressed in when armed (no LED) |
+| Room volume | 5× rotary encoder | One per room slot; relative (no ADC needed on the Pi) |
 | Mode buttons | 2× latching push-button | Shuffle, repeat symbols; stay pressed in when active |
 | Transport | 3× momentary button | Previous, play/pause, next |
 | Audio feedback | 1× piezo buzzer (GPIO) | Chirps/clicks/error beep; no audio jack needed |
@@ -374,6 +379,14 @@ handwritten cards. Drives the real Sonos.*
 ---
 
 ## Notes / decisions log
+
+### 2026-06-06 — Five room slots (future-proofing)
+The panel is built for **5 rooms**, not the 3 speakers we own today, so adding speakers
+later needs no rebuild — just label a spare cap and map its button to the new room in
+config. Kept **one volume knob per room** (5 knobs), consistent with the existing design.
+GPIO fits comfortably: **23 of 26 pins** used (PN532 ×2, 5 encoders ×2, 5 room + 2 mode
+buttons, 3 transport, 1 piezo). The `MusicBox` core already discovers speakers
+dynamically, so software needed no change; this is a hardware/layout + BOM decision.
 
 ### 2026-06-06 — Latching push-buttons, no LEDs anywhere
 Room arm and shuffle/repeat are **latching push-buttons** (push-on/push-off): the cap
