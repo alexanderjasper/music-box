@@ -10,8 +10,9 @@ display.
 > essentially every part below, cheaply, and ships from Germany to Denmark with **no
 > customs** (EU). A single BerryBase order covers the whole electronics build (specific SKUs chosen for the
 > controls — see items 6–8) for roughly **€55–75**. The **Buy** column lists BerryBase
-> first, with Danish shops as alternates if something's out of stock. Two picks still
-> need care — see the ⚠️ flags on the PSU (≥2.5 A) and the PN532 (module, not HAT).
+> first, with Danish shops as alternates if something's out of stock. One pick still
+> needs care — see the ⚠️ flag on the PN532 (get the **module**, not the HAT, which would
+> occupy our GPIO header).
 
 > New to soldering? The **WH** board has its 40-pin header pre-soldered, so the Pi needs
 > none. Encoders, buttons, the buzzer and the NFC module still need a few solder joints
@@ -23,8 +24,8 @@ display.
 | # | Part | Qty | ≈ price | Buy (BerryBase first, DK alt.) | Notes |
 |---|------|-----|------|-----|-------|
 | 1 | **Raspberry Pi Zero WH** (or **Zero 2 WH**) — pre-soldered header | 1 | €18–25 | [BerryBase Zero WH](https://www.berrybase.de/en/raspberry-pi-zero-wh) · [raspberrypi.dk (2 WH)](https://raspberrypi.dk/en/product/raspberry-pi-zero-2-wh-with-presoldered-header/) | The brain. **WH** = no header soldering. Original **Zero W is fine for Sonos-only**; the quad-core **Zero 2** is only worth chasing if you later want the Pi to play Bluetooth audio itself. The Pi is swappable later (same header, SD card moves over). |
-| 2 | microSD card 16–32 GB (A1) | 1 | €6–9 | [BerryBase (SanDisk Ultra)](https://www.berrybase.de/en/) · [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/sd-cards-adapters/) | Runs Raspberry Pi OS Lite. Use a genuine SanDisk/Samsung — cheap fakes corrupt on boot. |
-| 3 | **5V micro-USB PSU (≥2.5A)** ⚠️ | 1 | €8–12 | [official Pi PSU](https://www.raspberrypi.com/products/micro-usb-power-supply/) (BerryBase & raspberrypi.dk stock it) | Pi Zero uses **micro-USB** (not USB-C). ⚠️ **Don't buy a 1 A adapter** — even the Zero W browns out under Wi-Fi. Get ≥2.5 A (official PSU is ideal). |
+| 2 | microSD card 32 GB (A1) | 1 | €6–9 | [BerryBase SanDisk Ultra 32GB +adapter](https://www.berrybase.de/en/sandisk-ultra-microsdhc-a1-120mb/s-class-10-speicherkarte-adapter-32gb) | Runs Raspberry Pi OS Lite. Genuine SanDisk — cheap fakes corrupt on boot. |
+| 3 | **5V micro-USB PSU, 2.5A** | 1 | €8–12 | [BerryBase Pi micro-USB PSU 5V/2.5A](https://www.berrybase.de/micro-usb-netzteil-fuer-raspberry-pi-5v/2-5a-schwarz) | Pi Zero uses **micro-USB** (not USB-C). This one is **2.5 A** — don't substitute a 1 A adapter (browns out under Wi-Fi). |
 | 4 | **PN532 NFC module** (I²C/SPI/UART) ⚠️ | 1 | €7–12 | [BerryBase module (+card+dongle)](https://www.berrybase.de/en/pn532-nfc-und-rfid-modul-inkl.-karte-dongle) · [bitbyg](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/) · [arduinotech](https://arduinotech.dk/nfc-pn532-modul-brik/) | Reads the cards over I²C (2 wires + power). ⚠️ Get the **module**, *not* the [PN532 HAT](https://www.berrybase.de/en/pn532-nfc-hat-for-raspberry-pi-i2c-spi-uart) — the HAT occupies the 40-pin header we need for buttons/encoders. |
 | 5 | **NTAG215 NFC tags** (25 mm, self-adhesive) | 5–10 packs of 10 | €3–5 /pack | [BerryBase (self-adhesive ×10)](https://www.berrybase.de/en/rfid-nfc-tags-ntag215-25mm-self-adhesive-white-10-pieces) · [plain ×10](https://www.berrybase.de/en/rfid-nfc-tags-ntag215-25mm-white-10-pieces) · [idekort (bulk)](https://idekort.dk/vare-kategori/rfid-og-kontaktloese-kort-og-brikker/nfc-ntag-produkter/) | One per card. Self-adhesive ø25 mm stickers embed easily in a printed card. We only read the **UID**, so cheap tags are fine. |
 
@@ -43,17 +44,18 @@ display.
 |---|------|-----|------|-----|-------|
 | 10 | Breadboard (830-point) | 1 | €2–6 | [BerryBase (830)](https://www.berrybase.de/breadboard-mit-830-kontakten) · [arduinotech](https://arduinotech.dk/shop/breadboard-830-points/) | Prototype before soldering. |
 | 11 | Jumper wires (M-F, M-M, F-F kit) | 1 | €3–8 | [BerryBase (65-cable kit)](https://www.berrybase.de/jumper-kabel-kit-set-mit-65-kabeln-in-4-laengen-fuer-breadboards) · [let-elektronik](https://let-elektronik.dk/breadboard-jumper-wire-kit-140pcs) | For breadboarding and Pi connections. |
-| 12 | Hook-up / silicone wire (thin, ~26 AWG) | 1 | €4–6 | [BerryBase (prototyping)](https://www.berrybase.de/en/components/prototyping/jumper-cable/) · [arduinotech](https://arduinotech.dk/produkt-kategori/tilbehor/ledning-jump-wire-mm/) | For the final soldered build. |
-| 13 | (Optional) Resistor assortment | 1 kit | €5–8 | [let-elektronik (modstande)](https://let-elektronik.dk/modstande) | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
+| 12 | Hook-up wire set, 0.14 mm² (10 colours × 10 m) | 1 | €7–9 | [BerryBase Kupferlitze set 10×10m](https://www.berrybase.de/kupferlitze-isoliert-0-14-mm2-set-10x10m) | Single-strand insulated wire for the final soldered build; the colours keep wiring legible. |
+| 13 | (Optional) Resistor assortment, 525-pc | 1 kit | €6–9 | [BerryBase 525-pc metal-film set](https://www.berrybase.de/525-teiliges-metallschichtwiderstands-sortiment-in-kunststoffbox/) | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
 | 14 | (Optional) Pi Zero proto/HAT board | 1 | €4–8 | [BerryBase (permanent 830 PCB)](https://www.berrybase.de/permanent-pcb-breadboard-mit-830-kontakten-schwarz) · [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/raspberry-pi-zero-and-accessories/) | Tidy permanent wiring instead of loose solder. |
 
 ## Tools (if you don't have them)
 
-| # | Part | ≈ DKK | Buy | Notes |
+| # | Part | ≈ price | Buy | Notes |
 |---|------|------|-----|-------|
-| 15 | Temperature-controlled soldering iron + solder | 200–450 | [Kjell & Company](https://www.kjell.com/dk) | Kjell has these in-store (walk-in). A basic 60W is fine to learn on. |
-| 16 | Wire stripper / side cutters | 60–120 | [Kjell & Company](https://www.kjell.com/dk) | |
-| 17 | (Nice) Multimeter | 80–200 | [Kjell & Company](https://www.kjell.com/dk) | For checking connections/continuity. |
+| 15 | Soldering station (temp-controlled) | €25–45 | [BerryBase Lötcenter Digital 940](https://www.berrybase.de/loetcenter-digital-940-60w-loetkolben-90w-loet-entloetpistole) · budget: [4-pc 30W set](https://www.berrybase.de/4-teiliges-loetset-bestehend-aus-30w-loetkolben-entloetpumpe-loetkolbenablage) | Temp control (160–480 °C) makes learning easier. The 4-pc set is a cheaper non-regulated start. |
+| 16 | Solder, lead-free ø0.56 mm | €4–8 | [BerryBase goobay 0.56mm](https://www.berrybase.de/goobay-loetzinn-bleifrei-oe0-56mm-100g-rolle) | Fine gauge suits small electronics joints. |
+| 17 | Wire stripper + side cutter | €6–12 | [BerryBase auto stripper + cutter](https://www.berrybase.de/en/automatik-abisolierzange-mit-integriertem-kabelschneider) | Strips and cuts in one tool. |
+| 18 | (Nice) Multimeter | €15–30 | [BerryBase UNI-T UT131A](https://www.berrybase.de/uni-t-ut131a-digitales-multimeter-palm-size-mit-2mf-kapazitaetsmessung) | For continuity / voltage checks. Kjell (walk-in in DK) is a fine alternative. |
 
 ## 3D printed (you make these — no purchase)
 
@@ -79,14 +81,14 @@ display.
 - **[bitbyg.dk](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/)** / **[ebits.dk](https://ebits.dk/products/pn532-rfid-laeser-inkl-noglekort-og-noglebrik)** — PN532 module.
 - **[idekort.dk](https://idekort.dk/vare-kategori/rfid-og-kontaktloese-kort-og-brikker/nfc-ntag-produkter/)** — bulk NTAG213/215/216 tags & cards (item 5).
 - **[arduinotech.dk](https://arduinotech.dk/shop/ntag-rfid-nfc-tag-smartphones/)** — NTAG215 tags, Arduino-style modules.
-- **Kjell & Company** (kjell.com/dk, **physical stores** in DK) — soldering iron, wires, tools (items 15–17) you can pick up today.
+- **Kjell & Company** (kjell.com/dk, **physical stores** in DK) — soldering iron, wires, tools (items 15–18) if you'd rather walk in and buy today than wait for the BerryBase order.
 
 **If the Pi is out of stock everywhere:** check **[amazon.de](https://www.amazon.de/Raspberry-Pi%C2%AE-Zero-512-1-0/dp/B0DB2JBD9C)**
 (watch for third-party markup over RRP), **[Farnell](https://dk.farnell.com/)**, **POWER.dk**,
 **Dustin.dk**, or compare on **[PriceRunner](https://www.pricerunner.dk/pl/10012-3208416724/Single-board-computere/Raspberry-Pi-Zero-2-W-Zero-2-Sammenlign-Priser)**.
 
-> **Rough total:** **≈ €55–75** for the electronics + tags in one BerryBase order, plus
-> **≈ 300–600 DKK** of tools if you're starting from zero. Filament/enclosure: already covered.
+> **Rough total:** **≈ €55–75** for the electronics + tags, plus **≈ €40–95** of tools if
+> you're starting from zero — all in a single BerryBase order. Filament/enclosure: already covered.
 
 ---
 
