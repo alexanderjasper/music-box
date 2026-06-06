@@ -102,10 +102,11 @@ What runs the logic and talks to Sonos?
   can be added later. Podcasts beyond DR are a known gap — see findings.
 
 ### 4. Buttons & controls **(DECIDED — see "Control scheme" below)**
-Settled on, per room: a **latching toggle switch** (arm/disarm) **and** a separate
-**volume knob** (rotary encoder). Plus **shuffle** + **repeat** toggle switches,
-**previous / play / next** buttons, and a **piezo buzzer** for audio feedback. No
-dedicated mute (flip a room off, or turn its knob to zero).
+Settled on, per room: an **illuminated press button** (arm/disarm, room label on the
+cap, LED when armed) **and** a separate **volume knob** (rotary encoder). Plus
+**shuffle** + **repeat** illuminated symbol buttons, **previous / play / next**
+buttons, and a **piezo buzzer** for audio feedback. No dedicated mute (disarm a room,
+or turn its knob to zero).
 
 ### 5. Display: none vs. minimal **(open)**
 - None at all.
@@ -229,34 +230,34 @@ No general-purpose display. State is shown by the physical controls themselves
             ┌──────────────────────────────┐
             │   ·  place card here  ·       │   <- NFC "spot"
             │                               │
-            │   |ON    |ON    |ON           │   <- room toggle switch (up = armed)
+            │  [Alrum][Køkken][Grys]         │   <- room button (label on the cap, lights when armed)
             │   (O)    (O)    (O)            │   <- room volume knob (turn only)
-            │  Alrum  Køkken  Grys           │
-            │  [ shuffle ]   [ repeat ]      │   <- mode toggle switches
+            │   [⤬]        [↻]               │   <- shuffle / repeat symbol buttons
             │                               │
             │   (<<)   ( PLAY )   (>>)       │   <- previous · play/pause · next
             └──────────────────────────────┘
                                               ((•)) piezo buzzer (audio feedback)
 ```
 
-- **Per room (Alrum / Køkken / Grys værelse): a latching toggle switch + a volume knob,
-  as two separate controls.**
-  - **Toggle switch** = arm/disarm that room. Its physical position *is* the armed
-    indicator — flipped up = in the group. No LED or screen needed.
+- **Per room (Alrum / Køkken / Grys værelse): an illuminated press button + a volume
+  knob, as two separate controls.**
+  - **Room button** = arm/disarm that room. The room's own label is on the cap
+    (printed or hand-applied — the box ships unlabelled). It is a momentary push-button
+    with a latching state in software and an **LED that lights when the room is armed**.
   - **Volume knob** = that room's volume. A **rotary encoder** (relative, "turn up/down")
     rather than a potentiometer, because the Pi has no analog input — an encoder reads
     cleanly over GPIO. Maps to SoCo per-room volume.
-  - (Earlier we considered one push-rotary encoder doing both; separated on 2026-06-06
-    so each control does one obvious thing and arming is visible.)
+  - (Design evolved 2026-06-06: combined push-encoder → separate switch → finally an
+    illuminated press button with the label on the cap, per preference.)
 - **Play** button: group the currently-armed rooms (SoCo `join`/`unjoin`) and play
   the favorite mapped to the card sitting on the spot. Press again = pause/resume.
   - **If no room is armed, `play` does nothing** except sound a short **error beep**
     (see buzzer below). No silent no-op, no surprise default room.
 - **Previous / Next** buttons: skip within the current queue (SoCo `previous()` /
   `next()`). Some favorites are single tracks where skip won't apply — that's fine.
-- **Shuffle** and **Repeat** toggle switches: map to SoCo `play_mode`
-  (NORMAL / SHUFFLE / REPEAT_ALL / SHUFFLE_NOREPEAT). Their physical position *is*
-  the state indicator — no screen needed.
+- **Shuffle** and **Repeat** illuminated symbol buttons: press to toggle; the symbol
+  is raised in a contrasting colour (a multi-material print) and **lights when active**.
+  Map to SoCo `play_mode` (NORMAL / SHUFFLE / REPEAT_ALL / SHUFFLE_NOREPEAT).
 - **Piezo buzzer (audio feedback):** a small piezo on a GPIO pin gives a screenless
   device a voice. Yes, the Pi does this easily — a passive piezo + PWM can play tones,
   an active one just beeps; it does **not** use the (absent) audio jack. Planned cues:
@@ -299,9 +300,9 @@ No general-purpose display. State is shown by the physical controls themselves
 | Compute | Raspberry Pi Zero 2 W | Chosen — needs an OS for SoCo + web config |
 | Card reader | PN532 (I²C/SPI) | NFC; PN532 preferred over RC522 for interface flexibility |
 | Cards | NTAG215 stickers in printed holders | Cheap, batteryless, 100s scale |
-| Room arm | 3× latching toggle switch | One per room; switch position = armed state |
+| Room arm | 3× illuminated push-button | Label on cap; LED lights when armed |
 | Room volume | 3× rotary encoder | One per room; relative (no ADC needed on the Pi) |
-| Mode switches | 2× toggle switch | Shuffle, repeat (position shows state) |
+| Mode buttons | 2× illuminated push-button | Shuffle, repeat symbols; light when active |
 | Transport | 3× momentary button | Previous, play/pause, next |
 | Audio feedback | 1× piezo buzzer (GPIO) | Chirps/clicks/error beep; no audio jack needed |
 | Display | SSD1306 OLED (optional, later) | Track + time only |
@@ -333,9 +334,10 @@ python -m web.server          # then open http://localhost:8080
 
 ![Web simulator faceplate](docs/ui-preview.png)
 
-*The web simulator: warm 3D-printed-style enclosure, per-room arm switches + volume
-knobs (level shown by pointer rotation, no display), shuffle/repeat flips,
-prev/play/next, a card tray, and your deck of cards. Drives the real Sonos.*
+*The web simulator: warm 3D-printed-style enclosure, illuminated per-room arm buttons
+(label on the cap) + volume knobs (level shown by pointer rotation, no display),
+3D-printed shuffle/repeat symbol buttons, prev/play/next, a card tray, and your deck of
+handwritten cards. Drives the real Sonos.*
 
 ## Repository layout
 
@@ -363,6 +365,14 @@ prev/play/next, a card tray, and your deck of cards. Drives the real Sonos.*
 ---
 
 ## Notes / decisions log
+
+### 2026-06-06 — Controls are illuminated press buttons; labels on the caps
+Final control form (after the simulator made it tangible): room arm and shuffle/repeat
+are **illuminated push-buttons**, not flip switches. The **room's label lives on the
+button cap** (printed/hand-applied; the box itself is unlabelled), and an LED shows
+armed/active state. Shuffle/repeat carry their **symbol raised in a contrasting colour**
+(multi-material print). Volume stays a separate rotary-encoder knob per room, showing
+level by pointer rotation — no numeric display anywhere on the box.
 
 ### 2026-06-06 — Control revision: separate arm switch from volume knob
 Superseded the "one push-rotary encoder does both" idea. Per room there are now
