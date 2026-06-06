@@ -52,7 +52,7 @@ display.
 
 | # | Part | ≈ price | Buy | Notes |
 |---|------|------|-----|-------|
-| 15 | Soldering station (temp-controlled) | €25–45 | [BerryBase Lötcenter Digital 940](https://www.berrybase.de/loetcenter-digital-940-60w-loetkolben-90w-loet-entloetpistole) · budget: [4-pc 30W set](https://www.berrybase.de/4-teiliges-loetset-bestehend-aus-30w-loetkolben-entloetpumpe-loetkolbenablage) | Temp control (160–480 °C) makes learning easier. The 4-pc set is a cheaper non-regulated start. |
+| 15 | Soldering station (temp-controlled) | €33 | [BerryBase goobay AP2 analog station, 48W](https://www.berrybase.de/goobay-ap2-analoge-loetstation-48w/) | Dial temperature control + stand — the right amount of tool for this. Step up: [Fixpoint EP5 digital](https://www.berrybase.de/en/fixpoint-ep5-digital-soldering-station-with-set-and-actual-temperature-display) (€75). Step down: [4-pc 30W set](https://www.berrybase.de/4-teiliges-loetset-bestehend-aus-30w-loetkolben-entloetpumpe-loetkolbenablage) (unregulated). |
 | 16 | Solder, lead-free ø0.56 mm | €4–8 | [BerryBase goobay 0.56mm](https://www.berrybase.de/goobay-loetzinn-bleifrei-oe0-56mm-100g-rolle) | Fine gauge suits small electronics joints. |
 | 17 | Wire stripper + side cutter | €6–12 | [BerryBase auto stripper + cutter](https://www.berrybase.de/en/automatik-abisolierzange-mit-integriertem-kabelschneider) | Strips and cuts in one tool. |
 | 18 | (Nice) Multimeter | €15–30 | [BerryBase UNI-T UT131A](https://www.berrybase.de/uni-t-ut131a-digitales-multimeter-palm-size-mit-2mf-kapazitaetsmessung) | For continuity / voltage checks. Kjell (walk-in in DK) is a fine alternative. |
