@@ -12,40 +12,40 @@ spare slots for future expansion), NFC cards, no display.
 
 ## Core electronics
 
-| # | Part | Qty | ≈ DKK | Notes |
-|---|------|-----|------|-------|
-| 1 | **Raspberry Pi Zero 2 W** (get the **WH** = pre-soldered header) | 1 | 150–250 | The brain. WH saves you soldering the 40-pin header. |
-| 2 | microSD card 16–32 GB (A1) | 1 | 50–80 | Runs Raspberry Pi OS Lite. |
-| 3 | 5V micro-USB power supply (≥2.5A) | 1 | 70–110 | Pi Zero uses **micro-USB** for power (not USB-C). Official Pi PSU is reliable. |
-| 4 | **PN532 NFC module** (V3, I²C/SPI/UART) | 1 | 80–110 | Reads the cards. We use I²C (2 wires). |
-| 5 | **NTAG215 NFC tags/stickers** | 1 pack (50–100) | 120–200 | One per card. Buy in bulk; 25 mm round stickers are easy to embed. |
+| # | Part | Qty | ≈ DKK | Buy | Notes |
+|---|------|-----|------|-----|-------|
+| 1 | **Raspberry Pi Zero 2 W** (get the **WH** = pre-soldered header) | 1 | 150–250 | [raspberrypi.dk (WH)](https://raspberrypi.dk/en/product/raspberry-pi-zero-2-wh-with-presoldered-header/) · [compare](https://www.pricerunner.dk/pl/10012-3208416724/Single-board-computere/Raspberry-Pi-Zero-2-W-Zero-2-Sammenlign-Priser) | The brain. WH saves you soldering the 40-pin header. |
+| 2 | microSD card 16–32 GB (A1) | 1 | 50–80 | [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/sd-cards-adapters/) | Runs Raspberry Pi OS Lite. |
+| 3 | 5V micro-USB power supply (≥2.5A) | 1 | 70–110 | [official PSU](https://www.raspberrypi.com/products/micro-usb-power-supply/) (stocked at raspberrypi.dk) | Pi Zero uses **micro-USB** for power (not USB-C). Official Pi PSU is reliable. |
+| 4 | **PN532 NFC module** (V3, I²C/SPI/UART) | 1 | 80–110 | [bitbyg](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/) · [arduinotech](https://arduinotech.dk/nfc-pn532-modul-brik/) · [ebits](https://ebits.dk/products/pn532-rfid-laeser-inkl-noglekort-og-noglebrik) | Reads the cards. We use I²C (2 wires). |
+| 5 | **NTAG215 NFC tags/stickers** | 1 pack (50–100) | 120–200 | [idekort (ø25 mm)](https://idekort.dk/vare/ntag215-nfc-rfid-tag-rund-pvc-oe25-mm-selvklaebende-hvid/) · [bulk category](https://idekort.dk/vare-kategori/rfid-og-kontaktloese-kort-og-brikker/nfc-ntag-produkter/) | One per card. Buy in bulk; 25 mm round stickers are easy to embed. |
 
 ## Controls (the panel)
 
-| # | Part | Qty | ≈ DKK | Notes |
-|---|------|-----|------|-------|
-| 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 5 | 10–25 ea | One volume knob per room slot (3 used + 2 spare). Relative (no analog pin needed). Print the knobs. |
-| 7 | **Latching push-button** (push-on/push-off, ~16 mm) | 7 | 15–35 ea | 5 room-arm + shuffle + repeat. The cap **stays pressed in when active** — no LED needed; position *is* the state. Also: holds state across power-off, so the box remembers your selection. |
-| 8 | **Momentary push-button** (12–16 mm) | 3 | 10–20 ea | Previous / play-pause / next. (Play gets a printed combined ▶❚❚ cap.) |
-| 9 | **Passive piezo buzzer** | 1 | 5–15 | Audio feedback (chirps/error). *Passive* so PWM can play tones — not an active beeper. |
+| # | Part | Qty | ≈ DKK | Buy | Notes |
+|---|------|-----|------|-----|-------|
+| 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 5 | 10–25 ea | [arduinotech](https://arduinotech.dk/shop/rotary-encoder-modul/) · [let-elektronik](https://let-elektronik.dk/rotary-encoder) | One volume knob per room slot (3 used + 2 spare). Relative (no analog pin needed). Print the knobs. |
+| 7 | **Latching push-button** (push-on/push-off, ~16 mm) | 7 | 15–35 ea | [arduinotech (self-locking SPST)](https://arduinotech.dk/shop/push-button-switch-3a-250v-self-locking-spst/) | 5 room-arm + shuffle + repeat. The cap **stays pressed in when active** — no LED needed; position *is* the state. Also: holds state across power-off, so the box remembers your selection. |
+| 8 | **Momentary push-button** (12–16 mm) | 3 | 10–20 ea | [arduinotech](https://arduinotech.dk/shop/momentary-push-button-switch/) | Previous / play-pause / next. (Play gets a printed combined ▶❚❚ cap.) |
+| 9 | **Passive piezo buzzer** | 1 | 5–15 | [arduinotech (passive 5V)](https://arduinotech.dk/shop/buzzer-passiv-5v/) · [KY-006 module](https://arduinotech.dk/shop/ky-006-passive-buzzer-module/) | Audio feedback (chirps/error). *Passive* so PWM can play tones — not an active beeper. |
 
 ## Wiring & passives
 
-| # | Part | Qty | ≈ DKK | Notes |
-|---|------|-----|------|-------|
-| 10 | Breadboard (830-point) | 1 | 30–60 | Prototype before soldering. |
-| 11 | Jumper wires (M-F, M-M, F-F kit) | 1 | 40–60 | For breadboarding and Pi connections. |
-| 12 | Hook-up / silicone wire (thin, ~26 AWG) | 1 | 40 | For the final soldered build. |
-| 13 | (Optional) Resistor assortment | 1 kit | 40–60 | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
-| 14 | (Optional) Pi Zero proto/HAT board | 1 | 30–60 | Tidy permanent wiring instead of loose solder. |
+| # | Part | Qty | ≈ DKK | Buy | Notes |
+|---|------|-----|------|-----|-------|
+| 10 | Breadboard (830-point) | 1 | 30–60 | [arduinotech](https://arduinotech.dk/shop/breadboard-830-points/) · [let-elektronik](https://let-elektronik.dk/solderless-breadboard-830-holes) | Prototype before soldering. |
+| 11 | Jumper wires (M-F, M-M, F-F kit) | 1 | 40–60 | [let-elektronik (140 pcs)](https://let-elektronik.dk/breadboard-jumper-wire-kit-140pcs) · [arduinotech](https://arduinotech.dk/produkt-kategori/tilbehor/ledning-jump-wire-mm/) | For breadboarding and Pi connections. |
+| 12 | Hook-up / silicone wire (thin, ~26 AWG) | 1 | 40 | [arduinotech (wire category)](https://arduinotech.dk/produkt-kategori/tilbehor/ledning-jump-wire-mm/) | For the final soldered build. |
+| 13 | (Optional) Resistor assortment | 1 kit | 40–60 | [let-elektronik (modstande)](https://let-elektronik.dk/modstande) | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
+| 14 | (Optional) Pi Zero proto/HAT board | 1 | 30–60 | [raspberrypi.dk (Zero accessories)](https://raspberrypi.dk/en/shop/category/raspberry-pi-zero-and-accessories/) | Tidy permanent wiring instead of loose solder. |
 
 ## Tools (if you don't have them)
 
-| # | Part | ≈ DKK | Notes |
-|---|------|------|-------|
-| 15 | Temperature-controlled soldering iron + solder | 200–450 | Kjell & Company has these in-store (walk-in). A basic 60W is fine to learn on. |
-| 16 | Wire stripper / side cutters | 60–120 | |
-| 17 | (Nice) Multimeter | 80–200 | For checking connections/continuity. |
+| # | Part | ≈ DKK | Buy | Notes |
+|---|------|------|-----|-------|
+| 15 | Temperature-controlled soldering iron + solder | 200–450 | [Kjell & Company](https://www.kjell.com/dk) | Kjell has these in-store (walk-in). A basic 60W is fine to learn on. |
+| 16 | Wire stripper / side cutters | 60–120 | [Kjell & Company](https://www.kjell.com/dk) | |
+| 17 | (Nice) Multimeter | 80–200 | [Kjell & Company](https://www.kjell.com/dk) | For checking connections/continuity. |
 
 ## 3D printed (you make these — no purchase)
 
