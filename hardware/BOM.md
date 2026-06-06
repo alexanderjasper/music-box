@@ -53,7 +53,7 @@ display.
 | # | Part | ≈ price | Buy | Notes |
 |---|------|------|-----|-------|
 | 15 | Soldering station (temp-controlled) | €33 | [BerryBase goobay AP2 analog station, 48W](https://www.berrybase.de/goobay-ap2-analoge-loetstation-48w/) | Dial temperature control + stand — the right amount of tool for this. Step up: [Fixpoint EP5 digital](https://www.berrybase.de/en/fixpoint-ep5-digital-soldering-station-with-set-and-actual-temperature-display) (€75). Step down: [4-pc 30W set](https://www.berrybase.de/4-teiliges-loetset-bestehend-aus-30w-loetkolben-entloetpumpe-loetkolbenablage) (unregulated). |
-| 16 | Solder, lead-free ø0.56 mm | €4–8 | [BerryBase goobay 0.56mm](https://www.berrybase.de/goobay-loetzinn-bleifrei-oe0-56mm-100g-rolle) | Fine gauge suits small electronics joints. |
+| 16 | Solder, lead-free | €3–15 | [goobay 1.0mm 17g dispenser (~€3)](https://www.berrybase.de/goobay-loetzinn-bleifrei-oe1-0mm) · [0.56mm 100g roll (~€15)](https://www.berrybase.de/goobay-loetzinn-bleifrei-oe0-56mm-100g-rolle) | You only need a little for one box, so the small **17 g dispenser** is enough (1.0 mm = slightly thick). The **0.56 mm 100 g roll** is thinner/easier and a buy-once. (Lead-free silver solder runs pricey — don't be surprised by larger rolls at €25+.) |
 | 17 | Wire stripper + side cutter | €6–12 | [BerryBase auto stripper + cutter](https://www.berrybase.de/en/automatik-abisolierzange-mit-integriertem-kabelschneider) | Strips and cuts in one tool. |
 | 18 | (Nice) Multimeter | €15–30 | [BerryBase UNI-T UT131A](https://www.berrybase.de/uni-t-ut131a-digitales-multimeter-palm-size-mit-2mf-kapazitaetsmessung) | For continuity / voltage checks. Kjell (walk-in in DK) is a fine alternative. |
 
