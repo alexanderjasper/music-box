@@ -1,0 +1,12 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build / CAD exports
+*.gcode
