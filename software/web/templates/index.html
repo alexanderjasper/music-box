@@ -216,7 +216,7 @@
       <button class="tbtn small" id="prev" title="previous">
         <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18 5 18 19 9 12z"/><rect x="6" y="5" width="3" height="14" rx="1"/></svg></button>
       <button class="tbtn play" id="play" title="play / pause">
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l9-7z"/><rect x="15" y="5" width="3" height="14" rx="1"/><rect x="20" y="5" width="3" height="14" rx="1"/></svg></button>
       <button class="tbtn small" id="next" title="next">
         <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5 6 19 15 12z"/><rect x="15" y="5" width="3" height="14" rx="1"/></svg></button>
     </div>
@@ -235,8 +235,6 @@
 
 <script>
 const CUES = {{ cues|safe }};
-const PLAY_SVG = `<svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
-const PAUSE_SVG = `<svg class="icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`;
 let actx = null, currentCard = null, activeDragRoom = null;
 
 const same = (a, b) => (a || "").trim().toLowerCase() === (b || "").trim().toLowerCase();
@@ -361,9 +359,8 @@ function render(state) {
   document.getElementById("shuffle").classList.toggle("on", !!state.shuffle);
   document.getElementById("repeat").classList.toggle("on", !!state.repeat);
 
-  const play = document.getElementById("play");
-  play.classList.toggle("playing", !!state.playing);
-  play.innerHTML = state.playing ? PAUSE_SVG : PLAY_SVG;
+  // Fixed printed symbol — a real molded button can't change. State shows via the LED glow.
+  document.getElementById("play").classList.toggle("playing", !!state.playing);
 
   const tray = document.getElementById("tray");
   tray.classList.toggle("filled", !!state.current_card);
