@@ -97,5 +97,5 @@ this design needs **23** — it fits, with 3 pins to spare:
 
 (All buttons use internal pull-ups — no resistors. Latching buttons mean their GPIO
 level directly reflects armed/active state, and the Pi reads them at boot. The 5 room
-slots cover the 3 current speakers plus 2 for future expansion. A full wiring diagram
-is the next hardware doc.)
+slots cover the 3 current speakers plus 2 for future expansion. The exact pin-to-pin
+connections are in **[`WIRING.md`](WIRING.md)**.)
