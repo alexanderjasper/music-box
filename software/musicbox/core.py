@@ -132,8 +132,12 @@ class MusicBox:
         return _ok(f"card {card_id!r} -> favorite {self.card_map[card_id]!r}")
 
     def remove_card(self):
+        # Physical behaviour: lifting the card off the spot stops the music.
         self.current_card = None
-        return _ok("card removed")
+        if self.playing and self.coordinator_name:
+            self._try(self.speakers[self.coordinator_name].stop)
+        self.playing = False
+        return _ok("card removed — playback stopped")
 
     # --- transport -------------------------------------------------------
 

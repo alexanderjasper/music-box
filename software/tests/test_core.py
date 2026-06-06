@@ -68,6 +68,10 @@ class FakeSpeaker:
     def pause(self):
         self.transport_state = "PAUSED_PLAYBACK"
 
+    def stop(self):
+        self.transport_state = "STOPPED"
+        self.log.append("stop")
+
     def next(self):
         self.log.append("next")
 
@@ -149,6 +153,11 @@ def main():
     # disarm coordinator's partner stops it live
     box.toggle_room("Alrum")
     check("Alrum unjoined live", "unjoin" in box.speakers["Alrum"].log)
+
+    # removing the card off the spot stops playback (physical behaviour)
+    box.remove_card()
+    check("removing card stops coordinator", "stop" in box.speakers["Køkken"].log)
+    check("not playing after card removed", box.playing is False)
 
     # play with armed room but no card -> pause/resume toggle
     box2 = make_box()

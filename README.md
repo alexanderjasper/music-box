@@ -251,8 +251,12 @@ No general-purpose display. State is shown by the physical controls themselves
     illuminated press button with the label on the cap, per preference.)
 - **Play** button: group the currently-armed rooms (SoCo `join`/`unjoin`) and play
   the favorite mapped to the card sitting on the spot. Press again = pause/resume.
+  It carries a **single fixed play/pause symbol** (a molded button can't change its
+  face) — playback state is shown by the button's LED, not by swapping the glyph.
   - **If no room is armed, `play` does nothing** except sound a short **error beep**
     (see buzzer below). No silent no-op, no surprise default room.
+- **Removing the card stops playback.** Lifting the card off the spot is the natural
+  "stop" — like taking a record off a turntable. (Pause/resume stays on the play button.)
 - **Previous / Next** buttons: skip within the current queue (SoCo `previous()` /
   `next()`). Some favorites are single tracks where skip won't apply — that's fine.
 - **Shuffle** and **Repeat** illuminated symbol buttons: press to toggle; the symbol
