@@ -1,0 +1,6 @@
+{
+  "_comment": "card id -> a substring of the Sonos Favorite title to play. The card id is what's written on the physical card; it stands in for an NFC tag UID.",
+  "Bohemian Rhapsody": "Bohemian Rhapsody",
+  "DR P6": "DR P6",
+  "Come Away With Me": "Come Away with Me"
+}

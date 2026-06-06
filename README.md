@@ -308,16 +308,43 @@ No general-purpose display. State is shown by the physical controls themselves
 | Power | USB-C | TBD |
 | Enclosure | 3D printed (Prusa Core One) | Card spot + encoders + switches |
 
-## Repository layout (planned)
+## Software so far
+
+All control logic lives in `software/musicbox/` (the `MusicBox` core) with **no UI
+or hardware dependency** — so the CLI, the web simulator, and eventually the Pi's
+GPIO buttons are all thin front-ends over the same brain.
+
+- **`software/spike_sonos.py`** — the original de-risking spike (discover / list
+  favorites / play one). ✅ validated against the real speakers.
+- **`software/musicbox/`** — the core: room arming/grouping, per-room volume, play
+  modes, transport, card→favorite playback, and the buzzer cue vocabulary.
+- **CLI simulator** — `python -m musicbox`, simulates the panel via typed commands.
+- **Web simulator** — `python -m web.server`, a faceplate that looks like the box
+  and plays the buzzer cues in the browser. Doubles as a head start on the
+  "configure over the network" requirement.
+- **`software/tests/`** — logic tests with fake speakers (no Sonos needed).
 
 ```
-/firmware or /software   # the code that runs on the device
-/hardware                # wiring diagrams, BOM, pinouts
-/cad                     # 3D models / STLs for the enclosure and cards
-/docs                    # design notes, decisions, this scoping work
+cd software
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python -m web.server          # then open http://localhost:8080
 ```
 
-(Created as we go — empty for now.)
+![Web simulator faceplate](docs/ui-preview.png)
+
+*The web simulator: warm 3D-printed-style enclosure, per-room arm switches + volume
+knobs (level shown by pointer rotation, no display), shuffle/repeat flips,
+prev/play/next, a card tray, and your deck of cards. Drives the real Sonos.*
+
+## Repository layout
+
+```
+/software                # the code (musicbox core, CLI, web simulator, tests)
+/hardware                # wiring diagrams, BOM, pinouts (to come)
+/cad                     # 3D models / STLs for the enclosure and cards (to come)
+/docs                    # design notes, decisions, the UI preview
+```
 
 ---
 
