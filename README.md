@@ -75,14 +75,11 @@ playlist). The goal is zero phone use for **everyday playback**.
 
 These are the big decisions. We'll work through them and record the outcomes here.
 
-### 1. Card technology **(open)**
-How does the box recognize a card?
-- **NFC tags** (e.g. RC522/PN532 reader + NTAG215 stickers in printed cards) —
-  cheap, tiny, no battery, easy to encode an ID. Strong default.
-- RFID (similar to NFC, slightly different frequency/range).
-- Physical contacts / pin patterns / magnets + reed switches (fully offline,
-  more mechanical, more printing).
-- QR / barcode + camera (needs a camera + a little vision — heavier).
+### 1. Card technology **(DECIDED: NFC)**
+**NFC tags** — an NTAG215 sticker hidden inside each 3D-printed card, read by a
+PN532/RC522 reader in the box. Cheap (~€0.20/card), batteryless, scales to 100s,
+solder-free modules exist. The card just rests on a marked "spot." Each tag's UID
+(or a written ID) maps to a Sonos Favorite in the box config.
 
 ### 2. The "brain" **(leaning Raspberry Pi — see findings)**
 What runs the logic and talks to Sonos?
@@ -104,12 +101,10 @@ What runs the logic and talks to Sonos?
   **DR radio + DR podcasts** (via the **DR LYD** Sonos service). Other services
   can be added later. Podcasts beyond DR are a known gap — see findings.
 
-### 4. Buttons & controls **(open)**
-Minimum viable set:
-- Play / pause
-- Next / previous (?)
-- Volume up / down
-- Speaker / group selection (how? dedicated buttons? a card too?)
+### 4. Buttons & controls **(DECIDED — see "Control scheme" below)**
+Settled on: **one push-rotary encoder per room** (push = arm/disarm, turn = that
+room's volume), **shuffle** + **repeat** toggle switches, and a **play** button.
+Still open within this: whether to add next/previous, and the exact mute behaviour.
 
 ### 5. Display: none vs. minimal **(open)**
 - None at all.
@@ -224,6 +219,41 @@ drop-in for Apple Music. ([Phoniebox] does BT this way, with local/Spotify audio
 
 ---
 
+## Control scheme (decided 2026-06-06)
+
+No general-purpose display. State is shown by the physical controls themselves
+(a toggle's position, an encoder's LED) rather than a screen.
+
+```
+            ┌──────────────────────────────┐
+            │   ·  place card here  ·       │   <- NFC "spot"
+            │                               │
+            │   (O)      (O)      (O)        │   <- one rotary encoder per room
+            │  Alrum    Køkken   Grys        │      push = arm/disarm that room
+            │                               │      turn = that room's volume
+            │  [ shuffle ]   [ repeat ]      │   <- toggle switches (visible state)
+            │                               │
+            │          ( PLAY )              │   <- play / pause
+            └──────────────────────────────┘
+```
+
+- **One push-rotary encoder per room** (Alrum / Køkken / Grys værelse):
+  - **Push** = arm/disarm that room (an LED in/near the knob shows armed state).
+  - **Turn** = set that room's volume directly (SoCo `speaker.volume`).
+  - Keeps true per-room volume while collapsing "select + volume" into one tactile
+    part per room — fewer holes to print, less wiring than 6 volume buttons.
+- **Play** button: group the currently-armed rooms (SoCo `join`/`unjoin`) and play
+  the favorite mapped to the card sitting on the spot. Press again = pause/resume.
+- **Shuffle** and **Repeat** toggle switches: map to SoCo `play_mode`
+  (NORMAL / SHUFFLE / REPEAT_ALL / SHUFFLE_NOREPEAT). Their physical position *is*
+  the state indicator — no screen needed.
+- **Optional minimal display (later):** small OLED for track + elapsed/remaining
+  time + a volume blip. Nice-to-have, not v1.
+- **Still open:** next/previous track controls; mute behaviour; what happens on
+  "play" when no room is armed (ignore? arm a default room?).
+
+---
+
 ## Likely architecture (first hypothesis, to be challenged)
 
 > This is a starting point, **not** a committed decision.
@@ -247,13 +277,15 @@ drop-in for Apple Music. ([Phoniebox] does BT this way, with local/Spotify audio
 
 | Part | Candidate | Notes |
 |------|-----------|-------|
-| Compute | Raspberry Pi Zero 2 W | Or ESP32 — see open question 2 |
-| Card reader | PN532 / RC522 | NFC, see open question 1 |
-| Cards | NTAG215 stickers in printed holders | Cheap, batteryless |
-| Buttons | Momentary tactile switches | Count TBD |
-| Display | SSD1306 OLED (optional) | Track + time only |
+| Compute | Raspberry Pi Zero 2 W | Chosen — needs an OS for SoCo + web config |
+| Card reader | PN532 (I²C/SPI) | NFC; PN532 preferred over RC522 for interface flexibility |
+| Cards | NTAG215 stickers in printed holders | Cheap, batteryless, 100s scale |
+| Room control | 3× rotary encoder w/ push + LED | One per room: push = arm, turn = volume |
+| Mode switches | 2× toggle switch | Shuffle, repeat (position shows state) |
+| Play | 1× momentary button | Play / pause |
+| Display | SSD1306 OLED (optional, later) | Track + time only |
 | Power | USB-C | TBD |
-| Enclosure | 3D printed (Prusa Core One) | Cards slot/tray + buttons |
+| Enclosure | 3D printed (Prusa Core One) | Card spot + encoders + switches |
 
 ## Repository layout (planned)
 
@@ -312,4 +344,8 @@ Favorites in the Sonos app — they work the same way, just longer-playing.
   Pre-add content to Sonos Favorites once, then assign cards to favorites in config.
 - **Brain:** leaning **Raspberry Pi Zero 2 W** (needed for SoCo + web config).
 - **Known limitation:** non-DR podcasts (e.g. Apple Podcasts) aren't a Sonos service;
-  out of scope for v1.
+  reachable later via RSS → direct audio URL, out of scope for v1's first cut.
+- **Card tech:** **NFC** (NTAG215 in printed cards + PN532 reader). See open question 1.
+- **Controls:** **one push-rotary encoder per room** (push = arm/disarm, turn = volume),
+  **shuffle** + **repeat** toggle switches, **play** button. No screen; control
+  positions/LEDs show state. See "Control scheme". Volume is per-room via the knobs.
