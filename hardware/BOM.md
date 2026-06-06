@@ -1,43 +1,51 @@
-# Bill of Materials & where to buy (Denmark)
+# Bill of Materials & where to buy
 
-Everything needed to build the Music Box, with Danish/EU sources. You already have
-the **3D printer + filament**, so all knobs, button caps and the enclosure are
-printed (free). Prices are indicative (DKK, incl. VAT) and will vary — check current
-listings. Quantities are for the agreed design: **up to 5 rooms** (3 speakers today + 2
-spare slots for future expansion), NFC cards, no display.
+Everything needed to build the Music Box. You already have the **3D printer + filament**,
+so all knobs, button caps and the enclosure are printed (free). Prices are indicative
+(incl. VAT) and will vary — check current listings. Quantities are for the agreed design:
+**up to 5 rooms** (3 speakers today + 2 spare slots for future expansion), NFC cards, no
+display.
 
-> New to soldering? You'll need a basic iron (see "Tools"). Encoders, buttons, the
-> buzzer and the NFC module all need a few solder joints. Start on a **breadboard**
-> first (no soldering) to prove the wiring, then solder for the final build.
+> **Recommended: one order from [BerryBase.de](https://www.berrybase.de/en/).** It stocks
+> essentially every part below, cheaply, and ships from Germany to Denmark with **no
+> customs** (EU). A single BerryBase order covers the whole electronics build for roughly
+> **€55–75**. The **Buy** column lists BerryBase first, with Danish shops as alternates if
+> something's out of stock. Three picks need care — see the ⚠️ flags on the PSU, the
+> latching buttons, and the piezo/NFC.
+
+> New to soldering? The **WH** board has its 40-pin header pre-soldered, so the Pi needs
+> none. Encoders, buttons, the buzzer and the NFC module still need a few solder joints
+> for the final build — but start on a **breadboard** first (no soldering) to prove the
+> wiring.
 
 ## Core electronics
 
-| # | Part | Qty | ≈ DKK | Buy | Notes |
+| # | Part | Qty | ≈ price | Buy (BerryBase first, DK alt.) | Notes |
 |---|------|-----|------|-----|-------|
-| 1 | **Raspberry Pi Zero 2 W** (get the **WH** = pre-soldered header) | 1 | 150–250 | [raspberrypi.dk (WH)](https://raspberrypi.dk/en/product/raspberry-pi-zero-2-wh-with-presoldered-header/) · [compare](https://www.pricerunner.dk/pl/10012-3208416724/Single-board-computere/Raspberry-Pi-Zero-2-W-Zero-2-Sammenlign-Priser) | The brain. WH saves you soldering the 40-pin header. |
-| 2 | microSD card 16–32 GB (A1) | 1 | 50–80 | [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/sd-cards-adapters/) | Runs Raspberry Pi OS Lite. |
-| 3 | 5V micro-USB power supply (≥2.5A) | 1 | 70–110 | [official PSU](https://www.raspberrypi.com/products/micro-usb-power-supply/) (stocked at raspberrypi.dk) | Pi Zero uses **micro-USB** for power (not USB-C). Official Pi PSU is reliable. |
-| 4 | **PN532 NFC module** (V3, I²C/SPI/UART) | 1 | 80–110 | [bitbyg](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/) · [arduinotech](https://arduinotech.dk/nfc-pn532-modul-brik/) · [ebits](https://ebits.dk/products/pn532-rfid-laeser-inkl-noglekort-og-noglebrik) | Reads the cards. We use I²C (2 wires). |
-| 5 | **NTAG215 NFC tags/stickers** | 1 pack (50–100) | 120–200 | [idekort (ø25 mm)](https://idekort.dk/vare/ntag215-nfc-rfid-tag-rund-pvc-oe25-mm-selvklaebende-hvid/) · [bulk category](https://idekort.dk/vare-kategori/rfid-og-kontaktloese-kort-og-brikker/nfc-ntag-produkter/) | One per card. Buy in bulk; 25 mm round stickers are easy to embed. |
+| 1 | **Raspberry Pi Zero WH** (or **Zero 2 WH**) — pre-soldered header | 1 | €18–25 | [BerryBase Zero WH](https://www.berrybase.de/en/raspberry-pi-zero-wh) · [raspberrypi.dk (2 WH)](https://raspberrypi.dk/en/product/raspberry-pi-zero-2-wh-with-presoldered-header/) | The brain. **WH** = no header soldering. Original **Zero W is fine for Sonos-only**; the quad-core **Zero 2** is only worth chasing if you later want the Pi to play Bluetooth audio itself. The Pi is swappable later (same header, SD card moves over). |
+| 2 | microSD card 16–32 GB (A1) | 1 | €6–9 | [BerryBase (SanDisk Ultra)](https://www.berrybase.de/en/) · [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/sd-cards-adapters/) | Runs Raspberry Pi OS Lite. Use a genuine SanDisk/Samsung — cheap fakes corrupt on boot. |
+| 3 | **5V micro-USB PSU (≥2.5A)** ⚠️ | 1 | €8–12 | [official Pi PSU](https://www.raspberrypi.com/products/micro-usb-power-supply/) (BerryBase & raspberrypi.dk stock it) | Pi Zero uses **micro-USB** (not USB-C). ⚠️ **Don't buy a 1 A adapter** — even the Zero W browns out under Wi-Fi. Get ≥2.5 A (official PSU is ideal). |
+| 4 | **PN532 NFC module** (I²C/SPI/UART) ⚠️ | 1 | €7–12 | [BerryBase module (+card+dongle)](https://www.berrybase.de/en/pn532-nfc-und-rfid-modul-inkl.-karte-dongle) · [bitbyg](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/) · [arduinotech](https://arduinotech.dk/nfc-pn532-modul-brik/) | Reads the cards over I²C (2 wires + power). ⚠️ Get the **module**, *not* the [PN532 HAT](https://www.berrybase.de/en/pn532-nfc-hat-for-raspberry-pi-i2c-spi-uart) — the HAT occupies the 40-pin header we need for buttons/encoders. |
+| 5 | **NTAG215 NFC tags** (25 mm, self-adhesive) | 5–10 packs of 10 | €3–5 /pack | [BerryBase (self-adhesive ×10)](https://www.berrybase.de/en/rfid-nfc-tags-ntag215-25mm-self-adhesive-white-10-pieces) · [plain ×10](https://www.berrybase.de/en/rfid-nfc-tags-ntag215-25mm-white-10-pieces) · [idekort (bulk)](https://idekort.dk/vare-kategori/rfid-og-kontaktloese-kort-og-brikker/nfc-ntag-produkter/) | One per card. Self-adhesive ø25 mm stickers embed easily in a printed card. We only read the **UID**, so cheap tags are fine. |
 
 ## Controls (the panel)
 
-| # | Part | Qty | ≈ DKK | Buy | Notes |
+| # | Part | Qty | ≈ price | Buy (BerryBase first, DK alt.) | Notes |
 |---|------|-----|------|-----|-------|
-| 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 5 | 10–25 ea | [arduinotech](https://arduinotech.dk/shop/rotary-encoder-modul/) · [let-elektronik](https://let-elektronik.dk/rotary-encoder) | One volume knob per room slot (3 used + 2 spare). Relative (no analog pin needed). Print the knobs. |
-| 7 | **Latching push-button** (push-on/push-off, ~16 mm) | 7 | 15–35 ea | [arduinotech (self-locking SPST)](https://arduinotech.dk/shop/push-button-switch-3a-250v-self-locking-spst/) | 5 room-arm + shuffle + repeat. The cap **stays pressed in when active** — no LED needed; position *is* the state. Also: holds state across power-off, so the box remembers your selection. |
-| 8 | **Momentary push-button** (12–16 mm) | 3 | 10–20 ea | [arduinotech](https://arduinotech.dk/shop/momentary-push-button-switch/) | Previous / play-pause / next. (Play gets a printed combined ▶❚❚ cap.) |
-| 9 | **Passive piezo buzzer** | 1 | 5–15 | [arduinotech (passive 5V)](https://arduinotech.dk/shop/buzzer-passiv-5v/) · [KY-006 module](https://arduinotech.dk/shop/ky-006-passive-buzzer-module/) | Audio feedback (chirps/error). *Passive* so PWM can play tones — not an active beeper. |
+| 6 | **Rotary encoder, EC11** (6 mm knurled shaft) | 5 | €1–2 ea | [BerryBase (encoders)](https://www.berrybase.de/en/components/passive-components/potentiometer/rotary-encoder/) · [arduinotech](https://arduinotech.dk/shop/rotary-encoder-modul/) | One volume knob per room slot (3 used + 2 spare). Pick a 6 mm knurled-shaft EC11. Relative (no analog pin needed). Print the knobs. |
+| 7 | **Latching push-button** (~16 mm) ⚠️ | 7 | €1–3 ea | [BerryBase (switches)](https://www.berrybase.de/en/components/switches-pushbuttons/all-switches-pushbuttons/) · [arduinotech (self-locking)](https://arduinotech.dk/shop/push-button-switch-3a-250v-self-locking-spst/) | 5 room-arm + shuffle + repeat. ⚠️ Pick the **latching** kind (German *rastend* / "self-locking") — the cap **stays pressed in when active**, so position *is* the state (no LED) and it holds across power-off. *Not* the momentary (*tastend*) kind. |
+| 8 | **Momentary push-button** (12–16 mm) | 3 | €1–2 ea | [BerryBase (switches)](https://www.berrybase.de/en/components/switches-pushbuttons/all-switches-pushbuttons/) · [arduinotech](https://arduinotech.dk/shop/momentary-push-button-switch/) | Previous / play-pause / next — these are the **momentary** (*tastend*) kind. (Play gets a printed combined ▶❚❚ cap.) |
+| 9 | **Passive piezo buzzer** ⚠️ | 1 | €1–3 | [BerryBase (signal transmitters)](https://www.berrybase.de/en/components/active-components/signal-transmitter/) · [arduinotech (passive 5V)](https://arduinotech.dk/shop/buzzer-passiv-5v/) | Audio feedback (chirps/error). ⚠️ Get a **passive** piezo (PWM plays tones) — *not* an "active" fixed-tone beeper nor a DIP-switch "16 tones" module. |
 
 ## Wiring & passives
 
-| # | Part | Qty | ≈ DKK | Buy | Notes |
+| # | Part | Qty | ≈ price | Buy (BerryBase first, DK alt.) | Notes |
 |---|------|-----|------|-----|-------|
-| 10 | Breadboard (830-point) | 1 | 30–60 | [arduinotech](https://arduinotech.dk/shop/breadboard-830-points/) · [let-elektronik](https://let-elektronik.dk/solderless-breadboard-830-holes) | Prototype before soldering. |
-| 11 | Jumper wires (M-F, M-M, F-F kit) | 1 | 40–60 | [let-elektronik (140 pcs)](https://let-elektronik.dk/breadboard-jumper-wire-kit-140pcs) · [arduinotech](https://arduinotech.dk/produkt-kategori/tilbehor/ledning-jump-wire-mm/) | For breadboarding and Pi connections. |
-| 12 | Hook-up / silicone wire (thin, ~26 AWG) | 1 | 40 | [arduinotech (wire category)](https://arduinotech.dk/produkt-kategori/tilbehor/ledning-jump-wire-mm/) | For the final soldered build. |
-| 13 | (Optional) Resistor assortment | 1 kit | 40–60 | [let-elektronik (modstande)](https://let-elektronik.dk/modstande) | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
-| 14 | (Optional) Pi Zero proto/HAT board | 1 | 30–60 | [raspberrypi.dk (Zero accessories)](https://raspberrypi.dk/en/shop/category/raspberry-pi-zero-and-accessories/) | Tidy permanent wiring instead of loose solder. |
+| 10 | Breadboard (830-point) | 1 | €2–6 | [BerryBase (830)](https://www.berrybase.de/breadboard-mit-830-kontakten) · [arduinotech](https://arduinotech.dk/shop/breadboard-830-points/) | Prototype before soldering. |
+| 11 | Jumper wires (M-F, M-M, F-F kit) | 1 | €3–8 | [BerryBase (65-cable kit)](https://www.berrybase.de/jumper-kabel-kit-set-mit-65-kabeln-in-4-laengen-fuer-breadboards) · [let-elektronik](https://let-elektronik.dk/breadboard-jumper-wire-kit-140pcs) | For breadboarding and Pi connections. |
+| 12 | Hook-up / silicone wire (thin, ~26 AWG) | 1 | €4–6 | [BerryBase (prototyping)](https://www.berrybase.de/en/components/prototyping/jumper-cable/) · [arduinotech](https://arduinotech.dk/produkt-kategori/tilbehor/ledning-jump-wire-mm/) | For the final soldered build. |
+| 13 | (Optional) Resistor assortment | 1 kit | €5–8 | [let-elektronik (modstande)](https://let-elektronik.dk/modstande) | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
+| 14 | (Optional) Pi Zero proto/HAT board | 1 | €4–8 | [BerryBase (permanent 830 PCB)](https://www.berrybase.de/permanent-pcb-breadboard-mit-830-kontakten-schwarz) · [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/raspberry-pi-zero-and-accessories/) | Tidy permanent wiring instead of loose solder. |
 
 ## Tools (if you don't have them)
 
@@ -57,35 +65,35 @@ spare slots for future expansion), NFC cards, no display.
 
 ---
 
-## Where to buy (Denmark / EU)
+## Where to buy
 
-**One-stop-ish, Danish, fast:**
-- **[raspberrypi.dk](https://raspberrypi.dk/)** — Pi Zero 2 W (WH), microSD, official PSU, header, case. The obvious place for items 1–3.
-- **[let-elektronik.dk](https://let-elektronik.dk/rfid-nfc-tags-sensorer)** — wide hobby range: PN532/NFC, encoders, buttons, buzzer, breadboard, jumpers, LEDs, resistors (items 4, 6–13).
+**Recommended — one EU order, ships to DK, no customs:**
+- **[BerryBase.de](https://www.berrybase.de/en/)** — stocks the Pi board, PN532, NTAG215
+  packs, encoders, switches, piezo, breadboard and wires: the **whole electronics build in
+  one order** (the **Buy** column above links each item). Ships from Germany.
+
+**Danish, fast (good alternates / pickup):**
+- **[raspberrypi.dk](https://raspberrypi.dk/)** — Pi Zero 2 W (WH), microSD, official PSU, case (items 1–3).
+- **[let-elektronik.dk](https://let-elektronik.dk/rfid-nfc-tags-sensorer)** — wide hobby range: PN532/NFC, encoders, buttons, buzzer, breadboard, jumpers, resistors (items 4, 6–13).
 - **[elektronik-lavpris.dk](https://elektronik-lavpris.dk/)** — general hobby electronics, often cheap (PN532, buttons, passives).
-- **[bitbyg.dk](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/)** / **[ebits.dk](https://ebits.dk/products/pn532-rfid-laeser-inkl-noglekort-og-noglebrik)** — PN532 module (≈ 86 kr).
+- **[bitbyg.dk](https://bitbyg.dk/shop/pn532-nfc-rfid-module-v3/)** / **[ebits.dk](https://ebits.dk/products/pn532-rfid-laeser-inkl-noglekort-og-noglebrik)** — PN532 module.
 - **[idekort.dk](https://idekort.dk/vare-kategori/rfid-og-kontaktloese-kort-og-brikker/nfc-ntag-produkter/)** — bulk NTAG213/215/216 tags & cards (item 5).
 - **[arduinotech.dk](https://arduinotech.dk/shop/ntag-rfid-nfc-tag-smartphones/)** — NTAG215 tags, Arduino-style modules.
-- **Kjell & Company** (kjell.com/dk, **physical stores** in DK) — soldering iron, breadboard, wires, tools (items 10–17) you can pick up today.
+- **Kjell & Company** (kjell.com/dk, **physical stores** in DK) — soldering iron, wires, tools (items 15–17) you can pick up today.
 
-**Cheapest (slower shipping):**
-- **AliExpress** — PN532, EC11 encoders, push-buttons, NTAG215 (100-packs), jumper kits. Weeks of shipping but lowest cost; great for the bulk tags and the generic encoders/buttons.
+**If the Pi is out of stock everywhere:** check **[amazon.de](https://www.amazon.de/Raspberry-Pi%C2%AE-Zero-512-1-0/dp/B0DB2JBD9C)**
+(watch for third-party markup over RRP), **[Farnell](https://dk.farnell.com/)**, **POWER.dk**,
+**Dustin.dk**, or compare on **[PriceRunner](https://www.pricerunner.dk/pl/10012-3208416724/Single-board-computere/Raspberry-Pi-Zero-2-W-Zero-2-Sammenlign-Priser)**.
 
-**EU, reliable, ships to DK:**
-- **[BerryBase.de](https://www.berrybase.de/en/)** — Pi boards, PN532, NTAG215 packs, components.
-- **Farnell/[dk.farnell.com](https://dk.farnell.com/)**, **POWER.dk**, **Dustin.dk** — Pi Zero 2 W (item 1) if raspberrypi.dk is out of stock.
-
-Price comparison for the Pi: **[PriceRunner](https://www.pricerunner.dk/pl/10012-3208416724/Single-board-computere/Raspberry-Pi-Zero-2-W-Zero-2-Sammenlign-Priser)** (seen from ≈ 149 kr).
-
-> **Rough total:** ≈ 700–1100 DKK for the electronics + tags, plus ≈ 300–600 DKK of
-> tools if you're starting from zero. Filament/enclosure: already covered.
+> **Rough total:** **≈ €55–75** for the electronics + tags in one BerryBase order, plus
+> **≈ 300–600 DKK** of tools if you're starting from zero. Filament/enclosure: already covered.
 
 ---
 
 ## Does it fit the Pi? (GPIO budget)
 
-The Pi Zero 2 W has 26 usable GPIO. With 5 room slots and latching buttons (no LEDs)
-this design needs **23** — it fits, with 3 pins to spare:
+The Pi Zero W and Zero 2 W share the same 40-pin header — **26 usable GPIO**. With 5 room
+slots and latching buttons (no LEDs) this design needs **23** — it fits, with 3 to spare:
 
 | Function | Pins | Suggested BCM (finalise at wiring) |
 |----------|------|-----------------------------------|
