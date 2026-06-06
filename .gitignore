@@ -10,3 +10,6 @@ venv/
 
 # Build / CAD exports
 *.gcode
+
+# Playwright MCP artifacts
+.playwright-mcp/
