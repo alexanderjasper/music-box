@@ -131,9 +131,47 @@ into the card — so cards stay interchangeable. (Considered and deferred: "scen
 that also remember rooms/mode/volume. The data model leaves room to add optional defaults
 later without breaking existing cards.)
 
-### 8. Power **(open)**
-- USB-C wall power (simplest).
-- Battery + charging (portable, more complexity).
+### 8. Power & resilience **(DECIDED: wall power for v1; read-only root FS; battery path = rechargeable AA)**
+
+**v1 is wall-powered** — a **5V micro-USB PSU (≥2.5A)** (the Pi Zero takes micro-USB, *not*
+USB-C). For an always-on box that drives Sonos, mains is the simplest, most reliable choice
+and a battery buys nothing for everyday use.
+
+**Read-only root filesystem — decided regardless of power source.** The box runs with
+Raspberry Pi OS's **overlay filesystem** (`raspi-config` → Performance → Overlay FS): root
+mounts read-only with a RAM overlay, so **any power cut — yanked cable, home outage, or a
+drained battery — can never catch the SD card mid-write.** This removes the real risk of
+ungraceful shutdown, which is *not* our app's data (just `cards.json`, written rarely during
+enrollment) but **OS/SD corruption** from background writes + the SD card's own wear-levelling
+— a risk independent of how little we write. `cards.json` lives on a small writable partition
+and is saved **atomically** (temp file → `fsync` → rename), so a yank yields either the old or
+new file, never a torn one. This hardens the *wall-powered* box too (outages, "unplug = done").
+
+**Battery is an optional, later "portability" mode** — the goal, if added, is to actually
+carry the box between rooms / outside. Not required for v1. **Chosen path: rechargeable AA
+(NiMH).** Reasons: no lithium to handle or fire-proof in a 3D-printed case, cells are
+**hot-swappable** (carry a charged spare set → instant turnaround, arguably better than
+waiting on a cable), standard and user-replaceable forever, and all parts stock at BerryBase
+(see the BOM "Battery / portability" section). Build = **4× AA NiMH in a holder + a 5V boost
+converter** feeding the Pi's micro-USB (4×1.2V = 4.8V needs boosting to a solid 5V). Energy:
+~4× 2000mAh ≈ 9.6Wh → roughly **8 h** at the box's ~1W average.
+
+The two AA-path trade-offs we accept (both made tolerable by read-only root, above):
+- **Recharge by swapping, not in-place** — NiMH needs proper charge termination, so cells are
+  charged in a standalone AA charger rather than over a built-in port.
+- **No reliable fuel gauge** — NiMH's flat discharge curve defeats voltage-based "% left", so
+  there's **no auto-shutdown**; instead the box sounds a **low-battery buzzer cue** ("swap
+  soon"). Read-only root means an eventual hard cut-off can't corrupt the card anyway.
+
+*(Considered and not chosen: LiPo + a power-management board — e.g. **PiSugar 3**, which adds
+charge-in-place over USB, an I²C fuel gauge and RTC, and clips on without touching our GPIO
+header. Rejected for v1 because of the lithium-in-a-printed-box concern and the preference for
+swappable standard cells; it isn't stocked at BerryBase either. Revisit if phone-like
+charge-in-place becomes the priority.)*
+
+**Software implications:** an atomic `cards.json` save (above), and a distinct **low-battery
+buzzer cue** added to the existing cue vocabulary. With AA there's no fuel gauge to drive an
+auto-shutdown — read-only root makes that acceptable rather than required.
 
 ---
 
@@ -419,6 +457,18 @@ handwritten cards. Drives the real Sonos.*
 ---
 
 ## Notes / decisions log
+
+### 2026-06-07 — Power: wall for v1, read-only root FS, battery path = rechargeable AA
+Scoped open question #8. **v1 stays wall-powered** (5V micro-USB ≥2.5A). Adopted a
+**read-only root filesystem** (Raspberry Pi OS overlay FS) so power loss can't corrupt the SD
+card — the real ungraceful-shutdown risk is OS/SD corruption, not our tiny `cards.json` (now
+saved atomically). This hardens the wall build *and* de-risks battery. If a battery is added
+it's a **portability** mode, and the chosen chemistry is **rechargeable AA (NiMH)** over LiPo:
+no lithium in a printed case, hot-swappable standard cells, all parts at BerryBase. Trade-offs
+accepted: recharge by swapping cells externally, and **no auto-shutdown** (NiMH's flat curve
+defeats a fuel gauge) — replaced by a **low-battery buzzer cue**, made safe by read-only root.
+Build = 4× AA NiMH + a 5V boost converter → micro-USB; ~8 h runtime. LiPo/PiSugar 3 considered
+and deferred. See BOM "Battery / portability".
 
 ### 2026-06-06 — Pi board: original Zero W accepted (Sonos-only); BerryBase sourcing
 The Zero 2 W was hard to find in stock, so we accepted the **original Pi Zero WH**
