@@ -48,6 +48,24 @@ display.
 | 13 | (Optional) Resistor assortment, 525-pc | 1 kit | €6–9 | [BerryBase 525-pc metal-film set](https://www.berrybase.de/525-teiliges-metallschichtwiderstands-sortiment-in-kunststoffbox/) | Buttons use the Pi's internal pull-ups, so likely none needed for v1. Handy to have. |
 | 14 | (Optional) Pi Zero proto/HAT board | 1 | €4–8 | [BerryBase (permanent 830 PCB)](https://www.berrybase.de/permanent-pcb-breadboard-mit-830-kontakten-schwarz) · [raspberrypi.dk](https://raspberrypi.dk/en/shop/category/raspberry-pi-zero-and-accessories/) | Tidy permanent wiring instead of loose solder. |
 
+## Battery / portability (optional, deferred — not part of the v1 wall-powered build)
+
+Only needed if you later want to **carry the box around** (README open question #8). Decision:
+**rechargeable AA (NiMH)** over LiPo — no lithium in a printed case, cells **hot-swap** (keep a
+charged spare set), all parts stock at BerryBase. Pair with the **read-only root filesystem**
+(see README) so an empty pack can't corrupt the SD card. No fuel gauge → no auto-shutdown; the
+box just plays a **low-battery buzzer cue**. Runtime ≈ **8 h** (4× 2000 mAh ≈ 9.6 Wh, ~1 W draw).
+
+| # | Part | Qty | ≈ price | Buy (BerryBase) | Notes |
+|---|------|-----|------|-----|-------|
+| B1 | **5V buck-boost regulator**, fixed 5V, ~2–3 A | 1 | €13–16 | [Pololu S13V30F5 (5V step-up/down)](https://www.berrybase.de/pololu-5v-step-up-step-down-spannungsregler-s13v30f5) | ⚠️ Must be **buck-boost** (auto step-up/**down**), *not* a plain step-up. **4 fresh NiMH ≈ 5.2–5.4 V — above 5 V** — sagging to ~4 V when low; only a buck-boost holds a clean **fixed 5 V** across that range (this one: 2.8–22 V in). Feed its 5 V into the Pi's micro-USB. (*Simpler/cheaper alt:* **3× AA** stays <5 V → a plain step-up works, ~25% less runtime.) |
+| B2 | **Panasonic eneloop AA NiMH 2000 mAh**, 4-pack | 2 | €10–12 ea | [BerryBase eneloop AA 2000mAh ×4](https://www.berrybase.de/panasonic-eneloop-akku-mignon-aa-nimh-2000mah-4er-blister) | One set in the box + **one charged spare** for hot-swap. (Higher capacity: [eneloop Pro 2500mAh](https://www.berrybase.de/panasonic-eneloop-pro-akku-mignon-aa-nimh-2500mah-4er-blister), fewer charge cycles.) |
+| B3 | **4× AA battery holder** w/ switch + leads | 1 | €1–2 | [BerryBase 4× AA holder, switched, cabled](https://www.berrybase.de/batteriehalter-fuer-4x-mignon-aa-mit-150mm-anschlusskabel-geschlossenem-gehaeuse-und-schalter-wasserabweisend) | Cells in series → ~4.8 V into B1. The integrated **switch doubles as the box's power switch**. (Plain cabled holder without switch also fine: [4× AA 150 mm leads](https://www.berrybase.de/batteriehalter-fuer-4x-mignon-aa-2-2-mit-150mm-anschlusskabel).) |
+| B4 | **AA NiMH charger** | 1 | €15–22 | [BerryBase eneloop Smart & Quick BQ-CC55](https://www.berrybase.de/en/panasonic-eneloop-smart-quick-charger-bq-cc55) | Charges cells **out of the box** (NiMH needs −ΔV termination; no in-place charging). Per-slot charging. Any AA charger you own works just as well. |
+
+> **Battery add-on total:** **≈ €50–65** on top of the base build (mostly the cells + charger,
+> both reusable across other devices). Skip it if you stay wall-powered.
+
 ## Tools (if you don't have them)
 
 | # | Part | ≈ price | Buy | Notes |
