@@ -180,6 +180,16 @@ PY
 When all five families check out on the breadboard, transfer to soldered wiring (or a
 Pi Zero proto/HAT board) for the enclosure build.
 
+### Running the prototype software
+
+- **One control at a time:** `software/spike_gpio.py` (button → buzzer) is the smallest
+  end-to-end check — see its header for setup.
+- **The whole box:** copy `software/hardware.example.json` → `hardware.json`, list the
+  controls you've wired (it ships set up for the first prototype: buzzer, NFC, transport,
+  one room slot on the pins above), then run `python -m musicbox.service`. That binds
+  exactly those controls and serves the config app at `musicbox.local` to map the slot to
+  a Sonos room and bind cards. **Add a control = add it to `hardware.json`, no code change.**
+
 ---
 
 ## Cross-references

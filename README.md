@@ -403,24 +403,48 @@ Danish/EU retailers, indicative prices, and the Pi GPIO pin budget.
 ## Software so far
 
 All control logic lives in `software/musicbox/` (the `MusicBox` core) with **no UI
-or hardware dependency** — so the CLI, the web simulator, and eventually the Pi's
-GPIO buttons are all thin front-ends over the same brain.
+or hardware dependency**. Three thin front-ends drive the same brain: the CLI, the
+web simulator, and — now — the **real GPIO panel on the Pi**.
 
 - **`software/spike_sonos.py`** — the original de-risking spike (discover / list
   favorites / play one). ✅ validated against the real speakers.
-- **`software/musicbox/`** — the core: room arming/grouping, per-room volume, play
-  modes, transport, card→favorite playback, and the buzzer cue vocabulary.
+- **`software/spike_gpio.py`** — first on-Pi hardware bring-up (button → buzzer).
+- **`software/musicbox/`** — the core (room arming/grouping, per-room volume, play
+  modes, transport, card→favorite playback, the buzzer cue vocabulary), plus:
+  - **`musicbox/hardware/`** — the **config-driven hardware layer**: a `Panel` reads
+    `hardware.json` and builds *only* the controls you've actually wired (room
+    buttons, volume encoders, the PN532 reader, the piezo), wiring them to the core
+    via the slot→room map. **Adding a part is a JSON edit, not a code change.**
+  - **`musicbox/service.py`** — the on-device service: the panel **and** the config
+    web app over one shared box.
 - **CLI simulator** — `python -m musicbox`, simulates the panel via typed commands.
-- **Web simulator** — `python -m web.server`, a faceplate that looks like the box
-  and plays the buzzer cues in the browser. Doubles as a head start on the
-  "configure over the network" requirement.
-- **`software/tests/`** — logic tests with fake speakers (no Sonos needed).
+- **Web app** — `python -m web.server`: the faceplate at `/` **and the config app at
+  `/config`** — map room slots → Sonos rooms, bind NFC tags → favorites (with live
+  place-a-card enrollment). On the device this is served at `musicbox.local`.
+- **Config files** in `software/` (copy from each `*.example.json`): `hardware.json`
+  (which controls exist + their pins — hand-edited as you wire), `rooms.json`
+  (slot → Sonos room) and `cards.json` (tag UID → favorite). The last two are written
+  by the web app **atomically** (see open question #8).
+- **`software/tests/`** — logic tests with fake speakers, no Sonos/GPIO needed
+  (`core`, `config`, `panel`, `web`); run each with `python tests/<name>.py`.
+
+Run the simulator on a laptop:
 
 ```
 cd software
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m web.server          # then open http://localhost:8080
+python -m web.server          # faceplate at :8080/ , setup at :8080/config
+```
+
+Run on the Pi (real controls + config app together):
+
+```
+cd software
+sudo apt install -y python3-gpiozero python3-lgpio
+pip install --break-system-packages -r requirements-pi.txt
+cp hardware.example.json hardware.json     # then edit to match your wiring
+python -m musicbox.service                 # then open http://musicbox.local:8080
 ```
 
 ![Web simulator faceplate](docs/ui-preview.png)
