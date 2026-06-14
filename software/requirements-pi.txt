@@ -1,0 +1,14 @@
+# Raspberry Pi-only dependencies — install on the device with the system Python
+# (where the GPIO/I²C backends live), NOT in the laptop venv:
+#
+#     sudo apt install -y python3-gpiozero python3-lgpio
+#     pip install --break-system-packages -r requirements-pi.txt
+#
+# The laptop simulator only needs the top-level requirements.txt (soco + flask).
+
+soco>=0.30                          # the box drives Sonos directly
+flask>=3.0                          # the box also serves the config web UI
+gpiozero>=2.0                       # buttons, rotary encoders, the buzzer
+lgpio>=0.2                          # gpiozero's pin backend on Raspberry Pi OS Bookworm
+adafruit-circuitpython-pn532>=2.4   # PN532 NFC reader over I²C
+adafruit-blinka>=8.0                # CircuitPython compatibility layer (board/busio)

@@ -1,0 +1,9 @@
+{
+  "_comment": "Which physical controls exist and their BCM GPIO pins. HAND-EDIT this as you wire (the web app does NOT touch it). Copy to hardware.json. Omit a section to disable it; grow room_slots/modes as you add parts. Pins follow hardware/WIRING.md. This example is the FIRST PROTOTYPE: buzzer + NFC + transport + one room slot (button + volume encoder).",
+  "buzzer": { "pin": 18 },
+  "nfc": { "enabled": true, "poll_interval": 0.3 },
+  "transport": { "play": 9, "next": 8, "previous": 10 },
+  "room_slots": [
+    { "id": "1", "button": 4, "encoder_a": 17, "encoder_b": 27 }
+  ]
+}
