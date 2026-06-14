@@ -1,0 +1,23 @@
+software/musicbox/config.py
+  s_1cadbddd2542ff::t_7d03df6c702346 1,3-19,24,29-71,73-101
+software/rooms.example.json
+  s_1cadbddd2542ff::t_7d03df6c702346 1-4
+software/tests/test_config.py
+  s_1cadbddd2542ff::t_7d03df6c702346 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "f4c13ae6c2a4892a2ec0981dc5ab6bb346e7f3c9",
+  "prompts": {},
+  "sessions": {
+    "s_1cadbddd2542ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac939d48-a405-4e5c-a8c0-99d305963810",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
