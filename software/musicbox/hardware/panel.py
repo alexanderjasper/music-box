@@ -83,7 +83,14 @@ class Panel:
     def on_tag(self, uid):
         self.last_uid = uid
         self._present_uid = uid
-        return self._do(self.box.place_card, uid)
+        result = self._do(self.box.place_card, uid)
+        # Turntable behaviour: dropping a recognized card starts playback at once
+        # if a room is armed — no separate play press. With no room armed the card
+        # is just recognized (chirp) and waits; play stays available for
+        # pause/resume. (place_card already beeped an error for an unknown card.)
+        if result.get("ok") and self.box.armed:
+            return self._do(self.box.play)
+        return result
 
     def on_tag_removed(self):
         self._present_uid = None
