@@ -11,5 +11,10 @@ venv/
 # Build / CAD exports
 *.gcode
 
+# Device-specific runtime config — copy from the .example.json files; the box /
+# web app writes these. (cards.json stays tracked as the simulator's deck.)
+/software/rooms.json
+/software/hardware.json
+
 # Playwright MCP artifacts
 .playwright-mcp/
