@@ -1,0 +1,19 @@
+software/spike_nfc.py
+  s_1cadbddd2542ff::t_bb259acbb084b4 1-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "ce7602b61a12c9a51b05bc45f07e08b4675d2070",
+  "prompts": {},
+  "sessions": {
+    "s_1cadbddd2542ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac939d48-a405-4e5c-a8c0-99d305963810",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
