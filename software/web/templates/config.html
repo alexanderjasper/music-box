@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Box — setup</title>
+<style>
+  :root {
+    --desk: #14120e; --case: #dcd4c6; --ink: #34302a; --muted: #7c7567;
+    --line: #cdbfa6; --accent: #f5712c; --ok: #4a9d5b; --err: #e23b3b;
+    --hand: "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; padding: 30px 16px 60px;
+         background: radial-gradient(circle at 50% 14%, #201c16, var(--desk) 70%), var(--desk);
+         color: #e9e2d4; font: 14.5px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  a { color: var(--accent); text-decoration: none; }
+  .pill { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #b9b1a1; }
+  h1 { font-size: 22px; margin: 4px 0 2px; color: #f3ecdd; }
+  .lead { color: var(--muted); margin: 0 0 24px; font-size: 13px; }
+  .card-panel { width: 560px; max-width: 100%; background: linear-gradient(168deg, #26221b, #1b1814);
+                border: 1px solid #34302a; border-radius: 16px; padding: 22px 24px; margin-bottom: 22px;
+                box-shadow: 0 18px 44px rgba(0,0,0,.5); }
+  .card-panel h2 { font-size: 15px; margin: 0 0 4px; color: #f3ecdd; }
+  .card-panel .hint { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
+  .row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .row label.slot { flex: 0 0 110px; color: #d8d0c0; font-size: 13px; }
+  .row .grow { flex: 1; }
+  select, input[type=text] {
+    width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid #45403a;
+    background: #2c2823; color: #f0e9da; font-size: 14px; }
+  select:focus, input:focus { outline: none; border-color: var(--accent); }
+  button { cursor: pointer; border: none; border-radius: 9px; padding: 9px 16px; font-size: 13.5px;
+           font-weight: 600; background: linear-gradient(#ff9a5e, var(--accent)); color: #fff;
+           box-shadow: 0 3px 0 #b8501c; transition: transform .06s, box-shadow .06s; }
+  button:active { transform: translateY(2px); box-shadow: 0 1px 0 #b8501c; }
+  button.ghost { background: #322d27; color: #e9e2d4; box-shadow: 0 3px 0 #1b1814; }
+  button.danger { background: #3a2622; color: #f1b3ac; box-shadow: 0 3px 0 #1b1010; padding: 6px 11px; font-size: 12px; }
+  .actions { margin-top: 14px; display: flex; gap: 10px; align-items: center; }
+  .save-msg { font-size: 12.5px; color: var(--muted); }
+  .save-msg.ok { color: #9ad6a6; } .save-msg.err { color: #f0a9a3; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #2f2a24; font-size: 13.5px; }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  td.cid { font-family: var(--hand); font-size: 17px; color: #f3ecdd; }
+  .enroll { background: #221f19; border: 1px dashed #4a443c; border-radius: 11px; padding: 12px 14px; margin-bottom: 14px; }
+  .enroll .uid { font-family: ui-monospace, monospace; color: var(--accent); }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #322d27; color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; font-size: 13px; }
+  .topbar { width: 560px; max-width: 100%; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div><div class="pill">Music Box</div><h1>Setup</h1></div>
+    <div><a href="/">← faceplate</a></div>
+  </div>
+  <p class="lead" id="conn">Loading…</p>
+
+  <!-- ROOMS -->
+  <section class="card-panel">
+    <h2>Rooms</h2>
+    <p class="hint">Assign each physical room slot on the box to a Sonos room. The slots come from <code>hardware.json</code>.</p>
+    <div id="rooms"></div>
+    <div class="actions">
+      <button id="saveRooms">Save rooms</button>
+      <span class="save-msg" id="roomsMsg"></span>
+    </div>
+  </section>
+
+  <!-- CARDS -->
+  <section class="card-panel">
+    <h2>Cards</h2>
+    <p class="hint">Bind an NFC tag to a Sonos Favorite. Place a card on the box to capture its UID, or type an id by hand.</p>
+
+    <div class="enroll" id="enroll">
+      <div class="row" style="margin:0">
+        <div class="grow">
+          <span id="enrollState">Place a card on the box…</span>
+          <span class="uid" id="enrollUid"></span>
+        </div>
+        <button class="ghost" id="useUid" style="display:none">Use this UID</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label class="slot">Tag id / UID</label>
+      <div class="grow"><input type="text" id="cardId" placeholder="e.g. 04A2B3C4 (or a name in the sim)"></div>
+    </div>
+    <div class="row">
+      <label class="slot">Favorite</label>
+      <div class="grow"><select id="cardFav"></select></div>
+    </div>
+    <div class="actions">
+      <button id="saveCard">Bind card</button>
+      <span class="save-msg" id="cardMsg"></span>
+    </div>
+
+    <table id="cardTable" style="margin-top:18px">
+      <thead><tr><th>Card</th><th>Favorite</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+<script>
+let CFG = { sonos_rooms: [], slots: [], room_map: {}, cards: {}, favorites: [], nfc_last: null };
+
+async function load() {
+  CFG = await (await fetch("/api/config")).json();
+  const conn = document.getElementById("conn");
+  if (CFG.sonos_rooms.length)
+    conn.textContent = `Connected — Sonos rooms: ${CFG.sonos_rooms.join(", ")}`;
+  else
+    conn.textContent = "Not connected to Sonos — room/favorite lists will be empty until the box can reach the speakers.";
+  renderRooms(); renderFavorites(); renderCards();
+}
+
+function roomOptions(selected) {
+  const opts = ['<option value="">— unassigned —</option>'];
+  CFG.sonos_rooms.forEach(r =>
+    opts.push(`<option value="${esc(r)}"${r === selected ? " selected" : ""}>${esc(r)}</option>`));
+  return opts.join("");
+}
+
+function renderRooms() {
+  const wrap = document.getElementById("rooms");
+  if (!CFG.slots.length) {
+    wrap.innerHTML = '<p class="empty">No room slots defined yet — add them to hardware.json.</p>';
+    return;
+  }
+  wrap.innerHTML = CFG.slots.map(slot => `
+    <div class="row">
+      <label class="slot">Slot ${esc(slot)}</label>
+      <div class="grow"><select data-slot="${esc(slot)}">${roomOptions(CFG.room_map[slot] || "")}</select></div>
+    </div>`).join("");
+}
+
+function renderFavorites() {
+  const sel = document.getElementById("cardFav");
+  if (!CFG.favorites.length) { sel.innerHTML = '<option value="">(no favorites found)</option>'; return; }
+  sel.innerHTML = CFG.favorites.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+}
+
+function renderCards() {
+  const tb = document.querySelector("#cardTable tbody");
+  const ids = Object.keys(CFG.cards);
+  if (!ids.length) { tb.innerHTML = '<tr><td colspan="3" class="empty">No cards bound yet.</td></tr>'; return; }
+  tb.innerHTML = ids.map(id => `
+    <tr>
+      <td class="cid">${esc(id)}</td>
+      <td>${esc(CFG.cards[id])}</td>
+      <td style="text-align:right">
+        <button class="ghost" data-edit="${esc(id)}" style="padding:6px 11px;font-size:12px">Edit</button>
+        <button class="danger" data-del="${esc(id)}">Delete</button>
+      </td>
+    </tr>`).join("");
+  tb.querySelectorAll("[data-del]").forEach(b =>
+    b.onclick = () => saveCard({ action: "delete", id: b.dataset.del }));
+  tb.querySelectorAll("[data-edit]").forEach(b =>
+    b.onclick = () => {
+      document.getElementById("cardId").value = b.dataset.edit;
+      document.getElementById("cardFav").value = CFG.cards[b.dataset.edit];
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+}
+
+function setMsg(el, text, ok) {
+  el.textContent = text;
+  el.className = "save-msg " + (ok ? "ok" : "err");
+}
+
+document.getElementById("saveRooms").onclick = async () => {
+  const room_map = {};
+  document.querySelectorAll("#rooms select").forEach(s => { room_map[s.dataset.slot] = s.value; });
+  const r = await (await fetch("/api/rooms", post({ room_map }))).json();
+  setMsg(document.getElementById("roomsMsg"), r.message, r.ok);
+  if (r.ok) CFG.room_map = r.room_map;
+};
+
+async function saveCard(payload) {
+  const r = await (await fetch("/api/cards", post(payload))).json();
+  setMsg(document.getElementById("cardMsg"), r.message, r.ok);
+  if (r.ok) { CFG.cards = r.cards; renderCards(); if (payload.action !== "delete") document.getElementById("cardId").value = ""; }
+}
+
+document.getElementById("saveCard").onclick = () => saveCard({
+  id: document.getElementById("cardId").value,
+  favorite: document.getElementById("cardFav").value,
+});
+
+// Live NFC enrollment: poll the last UID the box's reader saw.
+async function pollNfc() {
+  try {
+    const { uid } = await (await fetch("/api/nfc/last")).json();
+    const state = document.getElementById("enrollState");
+    const uidEl = document.getElementById("enrollUid");
+    const useBtn = document.getElementById("useUid");
+    if (uid) {
+      state.textContent = "Card detected: ";
+      uidEl.textContent = uid;
+      useBtn.style.display = "";
+      useBtn.onclick = () => { document.getElementById("cardId").value = uid; };
+    } else {
+      state.textContent = "Place a card on the box…";
+      uidEl.textContent = "";
+      useBtn.style.display = "none";
+    }
+  } catch (_) {}
+}
+
+const post = body => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+load();
+setInterval(pollNfc, 1000);
+setInterval(load, 15000);  // refresh rooms/favorites occasionally
+</script>
+</body>
+</html>

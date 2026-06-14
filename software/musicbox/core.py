@@ -235,6 +235,10 @@ class MusicBox:
             self._fav_cache = list(any_speaker.music_library.get_sonos_favorites())
         return self._fav_cache
 
+    def favorite_titles(self, refresh=False):
+        """The live Sonos Favorite titles — what the config UI lists to bind cards to."""
+        return [fav.title for fav in self._favorites(refresh=refresh)]
+
     def _find_favorite(self, query):
         q = query.lower()
         for fav in self._favorites():
