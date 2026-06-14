@@ -1,0 +1,4 @@
+{
+  "_comment": "music-box room-slot id -> Sonos room (player) name. Copy to rooms.json (the web config UI writes this). Slot ids come from hardware.json; each physical button+knob slot is assigned one Sonos room here.",
+  "1": "Køkken"
+}
