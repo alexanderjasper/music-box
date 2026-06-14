@@ -147,17 +147,23 @@ def main():
     # tag present -> place_card(uid); the uid is remembered for web enrollment
     panel.on_room_set("1", True)
     r = panel.on_tag("04AABB")
-    check("tag places the mapped card", r["ok"] and box.current_card == "04AABB")
+    check("tag places the mapped card", box.current_card == "04AABB")
     check("last_uid recorded for enrollment", panel.last_uid == "04AABB")
 
-    # play with the card + an armed room -> plays the favorite
-    r = panel.on_play()
-    check("play with card+room succeeds", r["ok"])
+    # turntable: dropping the card with a room armed auto-plays (no play press)
+    check("placing a card auto-plays when armed", box.playing is True)
     check("Køkken got play_uri", any("play_uri" in e for e in box.speakers["Køkken"].log))
 
     # tag removed -> stops
     panel.on_tag_removed()
     check("removing tag stops playback", box.playing is False)
+
+    # placing a card with NO room armed just recognizes it — no play, no error
+    p2, b2 = make_panel({"1": "Køkken"})
+    p2.on_tag("04AABB")
+    check("unarmed: card is recognized", b2.current_card == "04AABB")
+    check("unarmed: nothing plays", b2.playing is False)
+    check("unarmed: chirps (not an error)", b2.buzzer.cues[-1] == "card")
 
     # remapping the live dict reroutes the same slot with no rebuild
     panel.room_map["1"] = "Alrum"
