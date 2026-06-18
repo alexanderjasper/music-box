@@ -16,8 +16,11 @@ PWM tones on a GPIO pin. Swapping one for the other changes nothing else.
 # buzzer just names them. Defining them here keeps laptop and Pi behaviour identical.
 CUES = {
     "card":    [(1175, 60), (1568, 90)],          # rising chirp — card recognized
-    "arm":     [(880, 40)],                        # soft click — room armed
-    "disarm":  [(440, 40)],                        # lower click — room disarmed
+    # The arm switches don't latch down, so the *direction* of the sweep is the
+    # state readout: a rising ring means "on", a falling ring means "off". Four
+    # close steps over ~150 ms read as one glide rather than separate beeps.
+    "arm":     [(587, 35), (784, 35), (988, 35), (1319, 55)],   # rising ring — armed
+    "disarm":  [(1319, 35), (988, 35), (784, 35), (587, 55)],   # falling ring — disarmed
     "confirm": [(1047, 70)],                       # blip — playback started
     "mode":    [(1319, 30)],                       # tick — shuffle/repeat changed
     "error":   [(220, 180), (0, 60), (220, 180)],  # low double buzz — not allowed
@@ -26,8 +29,8 @@ CUES = {
 # Human-readable labels, only used by the console buzzer.
 _LABELS = {
     "card": "card recognized",
-    "arm": "room armed",
-    "disarm": "room disarmed",
+    "arm": "room armed (rising ring)",
+    "disarm": "room disarmed (falling ring)",
     "confirm": "playback started",
     "mode": "mode changed",
     "error": "error / not allowed",
