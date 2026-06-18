@@ -28,6 +28,59 @@ def _err(message):
     return {"ok": False, "message": message}
 
 
+class VolumeCoalescer:
+    """Collapses a burst of encoder detents into as few Sonos calls as possible.
+
+    Each Sonos volume change is a network round-trip (~100ms+). Spinning the dial
+    fires a detent every few milliseconds, so doing one API call per detent makes
+    the volume crawl seconds behind the knob — and worse, blocks gpiozero's
+    callback thread, which then misses further detents.
+
+    So the detent callback only calls `nudge()`: it adds to a pending per-slot
+    delta and returns instantly. A worker thread applies the *net* accumulated
+    delta in one call. While that (slow) call is in flight, further detents pile
+    into the next delta, so a fast spin becomes a few big steps instead of a long
+    queue of laggy single steps — we deliberately skip the intermediate values.
+    """
+
+    def __init__(self, apply):
+        self._apply = apply              # callable(slot_id, net_delta)
+        self._pending = {}               # slot_id -> delta not yet applied
+        self._lock = threading.Lock()
+        self._wake = threading.Event()
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def nudge(self, slot_id, delta):
+        with self._lock:
+            self._pending[slot_id] = self._pending.get(slot_id, 0) + delta
+        self._wake.set()
+
+    def _run(self):
+        while not self._stop.is_set():
+            self._wake.wait()
+            self._wake.clear()
+            self._drain()
+
+    def _drain(self):
+        while True:
+            with self._lock:
+                if not self._pending:
+                    return
+                slot_id = next(iter(self._pending))
+                delta = self._pending.pop(slot_id)
+            try:
+                self._apply(slot_id, delta)
+            except Exception:
+                pass  # a failed call shouldn't kill the worker
+
+    def stop(self):
+        self._stop.set()
+        self._wake.set()
+        self._thread.join(timeout=1.0)
+
+
 class Panel:
     def __init__(self, box, profile, room_map, nfc=None, on_change=None):
         self.box = box
@@ -40,6 +93,8 @@ class Panel:
         self._controls = []             # keep gpiozero refs alive (else GC unbinds them)
         self._nfc_thread = None
         self._stop = threading.Event()
+        # coalesces fast encoder turns into few Sonos calls; built in bind()
+        self._volume = None
 
     # --- pure event handlers (unit-tested without any gpiozero) -------------
 
@@ -112,6 +167,9 @@ class Panel:
         from gpiozero import Button, RotaryEncoder
 
         p = self.profile
+        # Encoder turns go through the coalescer so a fast spin doesn't queue one
+        # slow Sonos call per detent (see VolumeCoalescer).
+        self._volume = VolumeCoalescer(self.on_volume)
 
         transport = {"play": self.on_play, "next": self.on_next, "previous": self.on_previous}
         for name, pin in p.transport.items():
@@ -140,8 +198,8 @@ class Panel:
                 self._controls.append(btn)
             if slot.has_encoder:
                 enc = RotaryEncoder(slot.encoder_a, slot.encoder_b, max_steps=0)
-                enc.when_rotated_clockwise = lambda s=slot.id: self.on_volume(s, VOLUME_STEP)
-                enc.when_rotated_counter_clockwise = lambda s=slot.id: self.on_volume(s, -VOLUME_STEP)
+                enc.when_rotated_clockwise = lambda s=slot.id: self._volume.nudge(s, VOLUME_STEP)
+                enc.when_rotated_counter_clockwise = lambda s=slot.id: self._volume.nudge(s, -VOLUME_STEP)
                 self._controls.append(enc)
 
         if self.nfc is not None:
@@ -179,6 +237,8 @@ class Panel:
 
     def stop(self):
         self._stop.set()
+        if self._volume is not None:
+            self._volume.stop()
         if self._nfc_thread is not None:
             self._nfc_thread.join(timeout=1.0)
         if self.nfc is not None:

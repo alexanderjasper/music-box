@@ -11,6 +11,7 @@ Run:  python tests/test_panel.py
 import os
 import sys
 import tempfile
+import threading
 import types
 
 # --- stub soco so importing the core works without it ----------------------
@@ -25,7 +26,7 @@ sys.modules.setdefault("soco.exceptions", _exc)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from musicbox.core import MusicBox  # noqa: E402
 from musicbox.feedback import Buzzer  # noqa: E402
-from musicbox.hardware.panel import VOLUME_STEP, Panel  # noqa: E402
+from musicbox.hardware.panel import VOLUME_STEP, Panel, VolumeCoalescer  # noqa: E402
 from musicbox.hardware.profile import HardwareProfile, RoomSlot, _from_dict, load_profile  # noqa: E402
 
 
@@ -169,6 +170,28 @@ def main():
     panel.room_map["1"] = "Alrum"
     panel.on_room_set("1", True)
     check("remapped slot now arms Alrum", "Alrum" in box.armed)
+
+    # --- volume coalescing -------------------------------------------------
+    # A burst of detents while one (slow) apply is in flight must collapse into a
+    # single follow-up call carrying the *net* delta — not one call per detent.
+    calls = []
+    gate = threading.Event()       # holds the first apply so detents can pile up
+    first = threading.Event()      # signals the worker is inside that first apply
+    def slow_apply(slot_id, delta):
+        calls.append((slot_id, delta))
+        if len(calls) == 1:
+            first.set()
+            gate.wait(timeout=2.0)
+    coalescer = VolumeCoalescer(slow_apply)
+    coalescer.nudge("1", VOLUME_STEP)        # kicks off the first apply
+    check("worker started applying", first.wait(timeout=2.0))
+    for _ in range(9):                        # 9 more detents arrive mid-call
+        coalescer.nudge("1", VOLUME_STEP)
+    gate.set()                                # let the first apply return
+    coalescer.stop()                          # drains the rest, then joins
+    check("coalesced burst into 2 calls, not 10", len(calls) == 2)
+    check("net delta preserved exactly", sum(d for _, d in calls) == 10 * VOLUME_STEP)
+    check("intermediate steps were skipped", calls[1] == ("1", 9 * VOLUME_STEP))
 
     print("\nAll panel checks passed.")
 
