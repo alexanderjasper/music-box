@@ -447,6 +447,17 @@ cp hardware.example.json hardware.json     # then edit to match your wiring
 python -m musicbox.service                 # then open http://musicbox.local:8080
 ```
 
+To push code updates from your laptop afterwards, use `software/sync.sh`. It
+rsyncs everything **except** the device's own runtime config (`cards.json`,
+`rooms.json`, `hardware.json`) — the files the web app writes on the box — so a
+deploy never wipes your enrolled NFC cards or room mapping:
+
+```
+cd software
+./sync.sh                       # -> alexander@musicbox.local:~/software/
+./sync.sh pi@192.168.1.42       # or a different host
+```
+
 ![Web simulator faceplate](docs/ui-preview.png)
 
 *The web simulator: warm 3D-printed-style enclosure, illuminated per-room arm buttons
