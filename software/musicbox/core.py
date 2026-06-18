@@ -44,6 +44,7 @@ class MusicBox:
         self.shuffle = False
         self.repeat = False
         self.current_card = None               # the card on the spot, or None
+        self._card_started = False             # has this card's favorite been loaded+started?
         self.playing = False
         self.coordinator_name = None
         self._fav_cache = None
@@ -128,12 +129,14 @@ class MusicBox:
             self.buzzer.error()
             return _err(f"Unknown card {card_id!r} (not in card map).")
         self.current_card = card_id
+        self._card_started = False  # a fresh card: the next play loads its favorite
         self.buzzer.card_recognized()
         return _ok(f"card {card_id!r} -> favorite {self.card_map[card_id]!r}")
 
     def remove_card(self):
         # Physical behaviour: lifting the card off the spot stops the music.
         self.current_card = None
+        self._card_started = False
         if self.playing and self.coordinator_name:
             self._try(self.speakers[self.coordinator_name].stop)
         self.playing = False
@@ -147,7 +150,11 @@ class MusicBox:
             return _err("No room armed — error beep, nothing happens.")
         coordinator = self._group_armed()
 
-        if self.current_card:
+        # A freshly placed card we haven't started yet: load and play its
+        # favorite. Once started, the card stays on the spot (turntable
+        # behaviour) so further play presses must NOT reload it — they fall
+        # through to pause/resume below, same as the no-card case.
+        if self.current_card and not self._card_started:
             query = self.card_map[self.current_card]
             fav = self._find_favorite(query)
             if not fav:
@@ -160,10 +167,12 @@ class MusicBox:
                 return _err(f"Sonos refused to play: {e}")
             self._reapply_play_mode()
             self.playing = True
+            self._card_started = True
             self.buzzer.confirm()
             return _ok(f"Playing {fav.title!r} in {', '.join(sorted(self.armed))}")
 
-        # No card on the spot: play acts as pause/resume on the current group.
+        # Card already started, or no card on the spot: play acts as
+        # pause/resume on the current group.
         try:
             state = coordinator.get_current_transport_info()["current_transport_state"]
             if state == "PLAYING":

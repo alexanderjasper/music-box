@@ -166,6 +166,22 @@ def main():
     r = box2.play()
     check("no-card play pauses when playing", r["message"] == "Paused")
 
+    # card on the spot: first play loads the favorite, further presses are
+    # pause/resume — they must NOT restart the favorite (turntable behaviour)
+    box3 = make_box()
+    box3.toggle_room("Køkken")
+    box3.place_card("bohemian")
+    box3.play()  # initial: loads the favorite
+    plays_after_start = sum("play_uri" in e for e in box3.speakers["Køkken"].log)
+    r = box3.play()  # second press while card still on spot
+    check("second play pauses, not restarts", r["message"] == "Paused")
+    check("second play did not re-issue play_uri",
+          sum("play_uri" in e for e in box3.speakers["Køkken"].log) == plays_after_start)
+    r = box3.play()  # third press resumes
+    check("third play resumes", r["message"] == "Resumed")
+    check("no extra play_uri on resume",
+          sum("play_uri" in e for e in box3.speakers["Køkken"].log) == plays_after_start)
+
     print("\nAll core-logic checks passed.")
 
 
