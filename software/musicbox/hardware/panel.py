@@ -21,7 +21,7 @@ a slot in the browser, the panel picks it up on the next button press.
 
 import threading
 
-VOLUME_STEP = 4  # volume change per encoder detent
+VOLUME_STEP = 2  # volume change per encoder detent
 
 
 def _err(message):
