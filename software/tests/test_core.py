@@ -214,6 +214,11 @@ def main():
     check("album added to the queue", any(e.startswith("add_to_queue:") for e in log))
     check("album played from the queue", "play_from_queue:0" in log)
     check("album did NOT use play_uri", not any("play_uri" in e for e in log))
+    # queued album means prev/next navigate its tracks on the coordinator
+    check("next works on a queued album", boxA.next()["ok"])
+    check("coordinator got next", "next" in log)
+    check("previous works on a queued album", boxA.previous()["ok"])
+    check("coordinator got previous", "previous" in log)
 
     # a track favorite still goes straight to play_uri (no queue churn)
     boxT = make_box()
