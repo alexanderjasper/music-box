@@ -161,7 +161,7 @@ class MusicBox:
                 self.buzzer.error()
                 return _err(f"No Sonos favorite matches {query!r}.")
             try:
-                coordinator.play_uri(fav.resources[0].uri, meta=fav.resource_meta_data)
+                self._start_favorite(coordinator, fav)
             except SoCoException as e:
                 self.buzzer.error()
                 return _err(f"Sonos refused to play: {e}")
@@ -247,6 +247,31 @@ class MusicBox:
     def favorite_titles(self, refresh=False):
         """The live Sonos Favorite titles — what the config UI lists to bind cards to."""
         return [fav.title for fav in self._favorites(refresh=refresh)]
+
+    def _start_favorite(self, coordinator, fav):
+        """Begin playback of a Sonos favorite, whichever kind it is.
+
+        A favorite points either to a single, directly-playable stream (a track
+        or a radio station) or to a *container* — an album, playlist or artist.
+        Only a stream can be handed to play_uri / SetAVTransportURI; doing that
+        with a container makes Sonos reject it with UPnP 714 "Illegal MIME-Type".
+        Containers have to be loaded into the queue and played from there, which
+        is also what lets shuffle/repeat span the whole album.
+        """
+        if self._is_container(fav):
+            coordinator.clear_queue()
+            coordinator.add_to_queue(fav.reference)
+            coordinator.play_from_queue(0)
+        else:
+            coordinator.play_uri(fav.resources[0].uri, meta=fav.resource_meta_data)
+
+    @staticmethod
+    def _is_container(fav):
+        """True if the favorite points to an album/playlist/artist, not a stream."""
+        try:
+            return fav.reference.item_class.startswith("object.container")
+        except Exception:
+            return False  # unparseable metadata: treat as a stream, try play_uri
 
     def _find_favorite(self, query):
         q = query.lower()

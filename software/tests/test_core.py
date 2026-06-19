@@ -29,10 +29,17 @@ from musicbox.feedback import Buzzer  # noqa: E402
 
 
 class FakeFavorite:
-    def __init__(self, title):
+    def __init__(self, title, item_class="object.item.audioItem.musicTrack"):
         self.title = title
+        self.item_class = item_class
         self.resources = [types.SimpleNamespace(uri=f"uri:{title}")]
         self.resource_meta_data = f"meta:{title}"
+
+    @property
+    def reference(self):
+        # soco parses the favorite's resMD into the object it points to; we just
+        # mirror the class + resources so MusicBox can tell stream from container.
+        return types.SimpleNamespace(item_class=self.item_class, resources=self.resources)
 
 
 class FakeLibrary:
@@ -60,6 +67,17 @@ class FakeSpeaker:
 
     def play_uri(self, uri, meta=None):
         self.log.append(f"play_uri:{uri}")
+        self.transport_state = "PLAYING"
+
+    def clear_queue(self):
+        self.log.append("clear_queue")
+
+    def add_to_queue(self, item, **kwargs):
+        self.log.append(f"add_to_queue:{item.resources[0].uri}")
+        return 1
+
+    def play_from_queue(self, index, start=True):
+        self.log.append(f"play_from_queue:{index}")
         self.transport_state = "PLAYING"
 
     def play(self):
@@ -91,7 +109,8 @@ class RecordingBuzzer(Buzzer):
 
 
 def make_box():
-    favs = [FakeFavorite("Bohemian Rhapsody"), FakeFavorite("Discover Sonos Radio")]
+    favs = [FakeFavorite("Bohemian Rhapsody"), FakeFavorite("Discover Sonos Radio"),
+            FakeFavorite("Greatest Hits", item_class="object.container.album.musicAlbum")]
     box = MusicBox(card_map={"bohemian": "Bohemian Rhapsody"}, buzzer=RecordingBuzzer())
     box.speakers = {n: FakeSpeaker(n, favs) for n in ("Alrum", "Køkken", "Grys værelse")}
     return box
@@ -181,6 +200,29 @@ def main():
     check("third play resumes", r["message"] == "Resumed")
     check("no extra play_uri on resume",
           sum("play_uri" in e for e in box3.speakers["Køkken"].log) == plays_after_start)
+
+    # album/playlist favorites are containers: must be queued, not play_uri'd
+    # (play_uri on a container is the UPnP 714 "Illegal MIME-Type" bug)
+    boxA = make_box()
+    boxA.card_map["album"] = "Greatest Hits"
+    boxA.toggle_room("Køkken")
+    boxA.place_card("album")
+    r = boxA.play()
+    log = boxA.speakers["Køkken"].log
+    check("album play succeeds", r["ok"])
+    check("album cleared the queue first", "clear_queue" in log)
+    check("album added to the queue", any(e.startswith("add_to_queue:") for e in log))
+    check("album played from the queue", "play_from_queue:0" in log)
+    check("album did NOT use play_uri", not any("play_uri" in e for e in log))
+
+    # a track favorite still goes straight to play_uri (no queue churn)
+    boxT = make_box()
+    boxT.toggle_room("Køkken")
+    boxT.place_card("bohemian")
+    boxT.play()
+    logT = boxT.speakers["Køkken"].log
+    check("track used play_uri", any("play_uri" in e for e in logT))
+    check("track did not touch the queue", not any("queue" in e for e in logT))
 
     print("\nAll core-logic checks passed.")
 
