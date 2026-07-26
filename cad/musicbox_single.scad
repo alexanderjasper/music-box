@@ -35,13 +35,13 @@
 //   whereas a tray's 71 mm floor would not. Card prints top-face down too.
 //   Nothing conductive/metal-filled — the PN532 has to read through the plate.
 //
-// Assembly order: nuts on the buttons and encoder onto the faceplate, PN532
-// onto its four posts, Pi onto the floor standoffs, wire per
-// hardware/WIRING.md (single room slot), then M3x10 up through the plate (6 of
-// them on this width — M3x12 now the plate is 6 mm). Heat the brass inserts into
-// the posts before assembly,
-// and press the magnet into the plate's underside boss (watch the polarity — all
-// the cards' magnets must face the opposite pole). Magnets are 6 x 2 mm discs.
+// Assembly order: heat the six brass inserts into the shell's posts. Push the
+// 6 x 2 mm magnet up the plate's blind bore until it stops, then glue it (watch
+// the polarity — every card's magnet must face the opposite pole). Nuts on the
+// buttons and encoder from the top, PN532 onto its two posts, buzzer taped behind
+// its grille, Pi dropped onto the floor pegs, then wire per hardware/WIRING.md
+// (single room slot) leaving ~10 cm of slack so the plate can be lifted off with
+// its controls still attached. Finally 6x M3x12 up through the plate.
 // The Pi needs no screws: it drops onto printed pegs and three snap clips
 // (pi_mount = "pegs"); "screws" (M2.5) and "ziptie" are the alternatives.
 // The card is located by a rim on its underside that drops into a matching
@@ -75,8 +75,8 @@ corner_r   = 6;     // outer corner radius
 chamfer    = 1.0;   // chamfer on the plate's top edge and the shell's bottom edge
 wall       = 2.4;   // side wall thickness
 floor_t    = 2.4;   // floor thickness
-// The plate is deliberately thick: the card sinks into a flared tray cut into it
-// (see "card seat"). Panel controls get local reliefs on the underside, so their
+// The plate is deliberately thick: the card's rim drops into a groove cut into it
+// (see "card seat"), and the controls get local reliefs on the underside so their
 // short bushings still reach through — see ctrl_plate_t.
 plate_t    = 6.0;   // faceplate thickness
 
@@ -135,11 +135,9 @@ enc_locator_deep  = 2.0;
 
 /* --------------------------------------------------------- card / NFC ---- */
 
-// The faceplate has NO recess for the card: its top face is flat and the magnet
-// alone locates the card, so nothing has to fit anything. The only marking is a
-// shallow engraved ring saying "put a card here" — set card_ring_d = 0 to drop
-// it. The plate is hollowed from *underneath* so the PN532 reads through a thin
-// membrane.
+// The plate is hollowed from *underneath* so the PN532 reads through a thin
+// membrane, leaving the top face free of any read-through feature. An engraved
+// ring can mark the spot (card_ring_d), but the card seat below does that job.
 card_ring_d    = 0;     // engraved "place card here" ring, outer dia (0 = none)
 card_ring_w    = 1.6;   // ring line width
 
@@ -163,8 +161,8 @@ card_pocket_d  = 42;    // underside pocket over the PN532 antenna coil
 card_membrane  = 1.2;   // plate left above the pocket — the NFC read path
 
 // A neodymium disc sits in the plate's centre, inside both antenna coils, so a
-// card with a matching magnet snaps into place in any orientation. It hides in a
-// local boss on the underside — nothing shows on the top face.
+// card with a matching magnet snaps down onto the spot. It lives in a blind bore
+// from the underside — nothing shows on the top face.
 magnet_d       = 6;      // disc diameter
 magnet_h       = 2;      // disc thickness
 magnet_fit     = 0.25;   // pocket clearance per diameter (press fit + a drop of CA)
@@ -187,12 +185,15 @@ pn532_post_r     = 3.0;
 
 /* --------------------------------------------------------------- buzzer -- */
 
-// Grille in the plate ahead of the transport row. The KY-006 module is small and
-// light — tape or hot-glue it to the plate underside behind the grille.
+// Grille in the plate ahead of the transport row. A pocket behind it takes the
+// depth out of the holes (6 mm of ø1.8 hole would muffle the buzzer badly) and
+// gives the KY-006 module a nest to be taped into.
 buzz_grille_d     = 1.8;
 buzz_grille_pitch = 4.0;
 buzz_grille_nx    = 5;
 buzz_grille_ny    = 2;
+buzz_relief       = [24, 11];   // pocket behind the grille (keeps clear of the seat)
+buzz_grille_t     = 2.0;        // plate left for the holes to pass through
 
 /* --------------------------------------------------------------- feet ----- */
 // Shallow recesses on the underside for stick-on rubber feet, so the box does not
@@ -236,9 +237,13 @@ pi_pcb_t      = 1.6;
 
 pi_peg_d      = 2.5;      // Pi hole is 2.75 — sand the peg if it prints tight
 pi_peg_h      = 3.2;      // above the standoff face: 1.6 PCB + 1.6 sticking out
-pi_clip_t     = 1.8;      // snap-clip cantilever thickness
+// The clips are short cantilevers, so they have to flex 0.6 mm over ~7 mm of
+// length — thin and with a small hook, or PLA cracks on the first insertion.
+// The pegs alone already locate the board; set pi_clips = false to leave them off.
+pi_clips      = true;
+pi_clip_t     = 1.2;      // snap-clip cantilever thickness
 pi_clip_w     = 9;        // width along the PCB edge
-pi_clip_hook  = 1.2;      // how far the hook reaches in over the PCB
+pi_clip_hook  = 0.6;      // how far the hook reaches in over the PCB
 pi_clip_gap   = 0.4;      // clearance between clip and PCB edge
 pi_pos        = [51, 95];  // PCB centre in plan — rear left, behind the breadboard
 
@@ -434,7 +439,7 @@ module pi_mount_parts() {
         }
     }
 
-    if (pi_mount == "pegs") {
+    if (pi_mount == "pegs" && pi_clips) {
         // two on the front long edge, one on the right short edge
         // (the left short edge stays clear for the microSD card)
         for (dx = [-20, 20])
@@ -530,6 +535,11 @@ module faceplate() {
         // magnet bore, loaded from underneath
         translate([card_pos[0], card_pos[1], -magnet_boss_h - 0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
+
+        // pocket behind the grille
+        translate([buzz_pos[0] - buzz_relief[0] / 2, buzz_pos[1] - buzz_relief[1] / 2,
+                   -0.5])
+            cube([buzz_relief[0], buzz_relief[1], plate_t - buzz_grille_t + 0.5]);
 
         // buzzer grille
         for (i = [0 : buzz_grille_nx - 1], j = [0 : buzz_grille_ny - 1])
