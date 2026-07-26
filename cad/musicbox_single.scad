@@ -37,7 +37,7 @@ $fs = 0.4;
 
 W          = 185;
 D          = 118;
-H          = 48;
+H          = 54;
 corner_r   = 6;
 chamfer    = 1.0;
 wall       = 2.4;
@@ -69,7 +69,7 @@ screw_cb_deep = 3.0;   // head is 3 mm tall, so it sits flush; 0 = on the surfac
 
 btn_hole_d   = 12.0;
 btn_body     = 15.0;   // keep-out for the preview
-btn_body_h   = 16.0;   // (verify)
+btn_body_h   = 30.0;   // shoulder to the back, wires included
 ctrl_plate_t = 3.0;
 btn_relief   = 15.6;   // (verify: assumes a 14 mm body)
 
@@ -193,6 +193,13 @@ engrave_d    = 0.6;
 icon_size    = 9;
 icon_tri_gap = 1.2;   // between the two triangles in << and >>
 icon_offset  = 6.5;   // icon centre above the button's hole edge
+
+// the switches hang deepest; they must clear the breadboard and its wiring
+btn_clear   = (shell_h - btn_body_h) - (floor_t + bb[2]);
+if (btn_clear < 5)
+    echo(str("WARNING: only ", btn_clear,
+             " mm between the switch backs and the breadboard — raise H by ",
+             ceil(5 - btn_clear)));
 
 magnet_bore = plate_t - magnet_cover;
 if (magnet_bore < magnet_h)
