@@ -187,7 +187,7 @@ prev_pos   = [106, 34];
 play_pos   = [131, 34];
 next_pos   = [156, 34];
 card_pos   = [48, 62];
-buzz_pos   = [48, 20];
+buzz_pos   = [48, 14];
 
 engrave_d    = 0.6;
 icon_size    = 9;
@@ -509,32 +509,36 @@ module card() {
 }
 
 /* ============================================================= test fit === */
-// Reproduces the plate stack: check that the bushings reach and their nuts grab,
-// that a card's rim fits the groove, that the magnet holds and a tag still reads.
+// Prints in the same orientation as the plate, so its holes gauge the real ones.
+// Stations left to right: switch, encoder, card spot, groove width, insert bore.
 
 module testfit() {
-    tf = [110, 50];
+    tf = [130, 50];
+    y  = tf[1] / 2;
     difference() {
         rbox_ch(tf[0], tf[1], plate_t, 6, chamfer);
 
-        translate([22, tf[1] / 2, -1]) cylinder(d = btn_hole_d, h = plate_t + 2);
-        translate([22 - btn_relief / 2, (tf[1] - btn_relief) / 2, -0.5])
+        translate([22, y, -1]) cylinder(d = btn_hole_d, h = plate_t + 2);
+        translate([22 - btn_relief / 2, y - btn_relief / 2, -0.5])
             cube([btn_relief, btn_relief, plate_t - ctrl_plate_t + 0.5]);
 
-        translate([54, tf[1] / 2, -1]) cylinder(d = enc_hole_d, h = plate_t + 2);
-        translate([54 - enc_relief / 2, (tf[1] - enc_relief) / 2, -0.5])
+        translate([54, y, -1]) cylinder(d = enc_hole_d, h = plate_t + 2);
+        translate([54 - enc_relief / 2, y - enc_relief / 2, -0.5])
             cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
 
-        translate([88, tf[1] / 2, -0.5]) difference() {
+        translate([88, y, -0.5]) difference() {
             cylinder(d = 30, h = plate_t - card_membrane + 0.5);
             translate([0, 0, -0.5]) cylinder(d = magnet_col_d, h = plate_t + 2);
         }
-        translate([88, tf[1] / 2, -0.01])
+        translate([88, y, -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
 
-        // groove width gauge, open at the coupon's edge
-        translate([70, -1, plate_t - card_seat_h])
-            cube([card_rim_w + 2 * card_seat_clear, 20, card_seat_h + 1]);
+        // groove width, open at the edge so a card's rim can be tried in it
+        translate([108, -1, plate_t - card_seat_h])
+            cube([card_rim_w + 2 * card_seat_clear, 19, card_seat_h + 1]);
+
+        // insert bore, to melt one in and try an M3x12
+        translate([122, y, -0.01]) cylinder(d = insert_hole_d, h = insert_depth);
     }
 }
 
@@ -591,7 +595,8 @@ module output() {
         translate([0, D, plate_t]) rotate([180, 0, 0]) faceplate();
     else if (part == "card")
         translate([0, card_size[1], card_t]) rotate([180, 0, 0]) card();
-    else if (part == "testfit") testfit();
+    else if (part == "testfit")
+        translate([0, 50, plate_t]) rotate([180, 0, 0]) testfit();
     else echo("unknown part");
 }
 
