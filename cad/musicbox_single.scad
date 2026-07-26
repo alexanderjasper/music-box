@@ -12,7 +12,7 @@
 // Assembly: brass inserts into the shell posts. Magnet up the plate's blind bore
 // until it stops, then glue (every card's magnet faces the opposite pole).
 // Switches in from the top, nuts from inside; encoder from below, nut on top;
-// PN532 on its two posts, buzzer taped
+// PN532 on its two posts with M3x8, buzzer taped
 // into its pocket, Pi onto the floor pegs. Wire per hardware/WIRING.md with
 // ~10 cm slack so the plate lifts off with its controls. 6x M3x12 from the top.
 //
@@ -109,9 +109,13 @@ magnet_cover  = 1.2;      // plastic between magnet and top face
 pn532_pcb        = [43, 41];   // (verify)
 pn532_hole_span  = 37.5;
 pn532_hole_angle = 45;
-pn532_hole_d     = 2.5;   // M3 self-tapper; 2.2 for M2.5 (check the board's holes)
-pn532_standoff   = 3.0;
-pn532_post_r     = 3.0;
+// Posts sized for an M3x8 self-tapping into PLA: 1.6 through the PCB leaves 6.4,
+// and the pilot runs 1 mm into the plate so the tip can't bottom out. 2.8 pilot —
+// 2.5 needs more torque than a printed post will take.
+pn532_hole_d     = 2.8;
+pn532_hole_deep  = 1.0;   // how far the pilot runs on into the plate
+pn532_standoff   = 6.0;
+pn532_post_r     = 3.5;
 
 /* -------------------------------------------------------------- buzzer --- */
 // The can drops into a pocket so its output sits right behind the grille, leaving
@@ -244,13 +248,6 @@ function pn532_hole_pts() = [
          card_pos[1] + sgn * pn532_hole_span / 2 * sin(pn532_hole_angle)]
 ];
 
-module boss(r, h, hole_d, base = 0) {
-    translate([0, 0, base]) difference() {
-        cylinder(r = r, h = h);
-        translate([0, 0, -0.1]) cylinder(d = hole_d, h = h + 0.2);
-    }
-}
-
 module bb_ribs() {
     x0 = bb_pos[0] - bb[0] / 2 - bb_clear;
     x1 = bb_pos[0] + bb[0] / 2 + bb_clear;
@@ -371,8 +368,9 @@ module faceplate() {
         union() {
             rbox_ch(W, D, plate_t, corner_r, chamfer);
             lip();
-            for (p = pn532_hole_pts()) translate([p[0], p[1], 0])
-                mirror([0, 0, 1]) boss(pn532_post_r, pn532_standoff, pn532_hole_d);
+            for (p = pn532_hole_pts())
+                translate([p[0], p[1], -pn532_standoff])
+                    cylinder(r = pn532_post_r, h = pn532_standoff);
             fh = buzz_can_h - buzz_can_deep + 2.6;   // past the PCB
             for (sx = [-1, 1])
                 translate([buzz_pos[0] + sx * (buzz_pcb[0] + 0.6 + buzz_fence[0]) / 2
@@ -391,6 +389,10 @@ module faceplate() {
 
         translate([card_pos[0], card_pos[1], -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
+
+        for (p = pn532_hole_pts())
+            translate([p[0], p[1], -pn532_standoff - 0.01])
+                cylinder(d = pn532_hole_d, h = pn532_standoff + pn532_hole_deep);
 
         translate([buzz_pos[0], buzz_pos[1], -0.5])
             cylinder(d = buzz_can_d, h = buzz_can_deep + 0.5);
