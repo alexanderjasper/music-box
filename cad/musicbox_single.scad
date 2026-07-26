@@ -78,7 +78,7 @@ btn_relief   = 15.6;   // (verify: assumes a 14 mm body)
 // locating lug: its 12x12 base sits in the relief, which keys it against rotation.
 
 enc_hole_d   = 8.0;
-enc_relief   = 12.6;   // 12x12 base, snug
+enc_relief   = 12.3;   // 12x12 base, 0.15 per side
 enc_board    = [19, 26];   // keep-out for the preview
 enc_board_h  = 20;
 
@@ -88,6 +88,8 @@ enc_board_h  = 20;
 // face down. The magnet holds the card down; the plate is hollowed from
 // underneath so the PN532 reads through a thin membrane.
 
+// If the rim ends up tight in the groove, shrink card_size rather than opening up
+// the groove — the card is the cheap part to reprint.
 card_seat_clear = 0.4;    // around the rim, per side
 card_seat_h     = 2.2;    // groove depth
 card_rim_w      = 3.0;
@@ -510,16 +512,16 @@ module card() {
 
 /* ============================================================= test fit === */
 // Minimal coupon, printed in the plate's orientation so its holes gauge the real
-// ones. Stations: switch, encoder, card spot, groove width, insert boss. The icon
-// sits in spare margin — it costs nothing and checks engraving depth.
+// ones. Stations: switch, encoder, card spot, insert boss. The icon sits in spare
+// margin — it costs nothing and checks engraving depth.
 
 module testfit() {
-    tf = [94, 32];
+    tf = [82, 32];
     y  = tf[1] / 2;
     difference() {
         union() {
             rbox_ch(tf[0], tf[1], plate_t, 5, chamfer);
-            translate([86, y, -6]) cylinder(d = 2 * post_r, h = 6);
+            translate([74, y, -6]) cylinder(d = 2 * post_r, h = 6);
         }
         translate([13, y, -1]) cylinder(d = btn_hole_d, h = plate_t + 2);
         translate([13 - btn_relief / 2, y - btn_relief / 2, -0.5])
@@ -536,12 +538,8 @@ module testfit() {
         translate([55, y, -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
 
-        // groove width, open at the edge so a card's rim can be tried in it
-        translate([74, -1, plate_t - card_seat_h])
-            cube([card_rim_w + 2 * card_seat_clear, 13, card_seat_h + 1]);
-
         // insert bore, in a boss of the same wall as the shell's posts
-        translate([86, y, -6.01]) cylinder(d = insert_hole_d, h = insert_depth);
+        translate([74, y, -6.01]) cylinder(d = insert_hole_d, h = insert_depth);
 
         engrave([20, tf[1] - 7]) icon_power(icon_size);
     }
