@@ -435,10 +435,11 @@ module icon_play_pause(s) {
 
 // IEC power mark: broken circle with a bar through the gap
 module icon_power(s) {
-    r = 0.34 * s;
-    t = 0.13 * s;
-    bar = r + 0.42 * s;
-    translate([0, -0.07 * s]) {
+    r   = 0.34 * s;
+    t   = 0.13 * s;
+    top = r + t / 2 + 0.15 * s;   // how far the bar pokes past the circle
+    bot = -0.04 * s;
+    translate([0, (r + t / 2 - top) / 2]) {
         difference() {
             difference() {
                 circle(r = r + t / 2);
@@ -446,7 +447,7 @@ module icon_power(s) {
             }
             translate([0, r]) square([3 * t, 3 * t], center = true);
         }
-        translate([0, bar / 2 - 0.05 * s]) square([t, bar], center = true);
+        translate([0, (bot + top) / 2]) square([t, top - bot], center = true);
     }
 }
 
