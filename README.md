@@ -469,8 +469,8 @@ handwritten cards. Drives the real Sonos.*
 
 ```
 /software                # the code (musicbox core, CLI, web simulator, tests)
-/hardware                # wiring diagrams, BOM, pinouts (to come)
-/cad                     # 3D models / STLs for the enclosure and cards (to come)
+/hardware                # wiring diagrams, BOM, pinouts
+/cad                     # OpenSCAD models for the enclosure (single-speaker v1) and cards
 /docs                    # design notes, decisions, the UI preview
 ```
 
