@@ -21,7 +21,7 @@
 /* [View] */
 part = "assembly";  // [assembly, shell, faceplate, card, testfit]
 // lift the stack apart, mm
-explode = 0;        // [0:1:80]
+explode = 80;        // [0:1:80]
 // cut away everything right of section_x
 section = false;    // [true, false]
 section_x = 48;     // [0:1:185]
@@ -55,37 +55,34 @@ lip_clear  = 0.4;   // per side; 0.25 is too tight across 185 mm
 
 post_r        = 5.0;
 post_inset    = wall + lip_w + post_r;   // keeps the lip ring clear of the posts
-insert_hole_d = 4.0;   // Ruthex/McMaster M3: 4.0 x 5.8
-insert_depth  = 6.0;
+insert_hole_d = 4.6;   // for the M3 x 5 x 5.0 OD inserts on hand
+insert_depth  = 5.5;
 screw_hole_d  = 3.4;
-screw_head_d  = 6.0;   // (verify)
-screw_cb_deep = 1.2;   // 0 = heads sit on the surface
+screw_head_d  = 5.0;
+screw_cb_deep = 3.0;   // head is 3 mm tall, so it sits flush; 0 = on the surface
 
 /* ------------------------------------------------------------ buttons ---- */
-// Latching toggle and momentary transport buttons are the same 14x14 body with a
-// 12 mm bushing. The bushings are only ~4.5 mm long, so the plate is milled back
-// to ctrl_plate_t from underneath; the square relief also keys the body against
-// rotation.
+// Latching toggle and momentary transport buttons share a 12 mm bushing. Measured
+// bushing 7.5, nut 2.0, washer 1.5 — so the plate is milled back from underneath
+// to leave 4.0 mm of thread for 3.5 mm of hardware. The relief also keys the
+// square body against rotation.
 
 btn_hole_d   = 12.0;
 btn_body     = 15.0;   // keep-out for the preview
 btn_body_h   = 16.0;   // (verify)
-ctrl_plate_t = 2.6;    // (verify against your bushings)
-btn_relief   = 15.6;
-enc_relief   = 14.0;
+ctrl_plate_t = 3.5;
+btn_relief   = 15.6;   // (verify: assumes a 14 mm body)
 
 /* ------------------------------------------------------------ encoder ---- */
-// KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. Most
-// EC11s have a locating lug; its pocket is cut in the relief floor, so it never
-// shows on top and is harmless if yours has none.
+// KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. No
+// locating lug: its 12x12 base sits in the relief, which keys it against
+// rotation. Its bushing is shorter than the switches', hence its own thickness.
 
-enc_hole_d        = 8.0;
-enc_board         = [19, 26];   // keep-out for the preview
-enc_board_h       = 20;
-enc_locator_d     = 2.2;
-enc_locator_off   = 5.6;   // from the shaft axis (verify)
-enc_locator_angle = 90;    // deg from +x (verify)
-enc_locator_deep  = 2.0;
+enc_hole_d   = 8.0;
+enc_plate_t  = 2.0;    // (verify: needs bushing length - 2 mm for the nut)
+enc_relief   = 12.6;   // 12x12 base, snug
+enc_board    = [19, 26];   // keep-out for the preview
+enc_board_h  = 20;
 
 /* --------------------------------------------------------- card / NFC ---- */
 // The card's rim drops into a groove in the plate: it keeps a written title
@@ -101,8 +98,8 @@ card_rim_h      = 2.0;
 card_pocket_d   = 42;     // relief over the antenna coil
 card_membrane   = 1.2;    // the read path
 
-magnet_d      = 6;
-magnet_h      = 2;
+magnet_d      = 6.06;
+magnet_h      = 2.04;
 magnet_fit    = 0.25;
 magnet_cover  = 1.2;      // plastic between magnet and top face
 magnet_col_d  = magnet_d + 8;   // solid column through the NFC relief
@@ -111,7 +108,7 @@ magnet_col_d  = magnet_d + 8;   // solid column through the NFC relief
 // the antenna stays centred. If the diagonal isn't 45 deg, measure dx/dy between
 // the holes and set the angle to atan2(dy, dx).
 pn532_pcb        = [43, 41];   // (verify)
-pn532_hole_span  = 38;
+pn532_hole_span  = 37.5;
 pn532_hole_angle = 45;
 pn532_hole_d     = 2.5;   // M3 self-tapper; 2.2 for M2.5 (check the board's holes)
 pn532_standoff   = 3.0;
@@ -122,9 +119,9 @@ pn532_post_r     = 3.0;
 // holes stay short — 6 mm of ø1.8 hole would muffle it. Two fences flank the PCB;
 // tape or glue it.
 
-buzz_pcb          = [18.5, 15];   // (verify)
-buzz_can_d        = 13;           // (verify)
-buzz_can_h        = 9;            // (verify)
+buzz_pcb          = [19.2, 15.2];
+buzz_can_d        = 13.4;         // ø13 can + fit
+buzz_can_h        = 8.3;
 buzz_can_deep     = 3.0;          // how far the can sinks into the plate
 buzz_grille_d     = 1.8;
 buzz_grille_pitch = 4.0;
@@ -166,7 +163,7 @@ pi_clip_hook  = 0.6;
 pi_clip_gap   = 0.4;
 pi_pos        = [51, 95];   // rear left, behind the breadboard
 
-port_slot_w   = 54;    // mini-HDMI + USB + PWR in one slot
+port_slot_w   = 58;    // covers 4.5-62.5 mm along the Pi's rear edge
 port_slot_h   = 12;
 port_slot_x   = pi_pos[0] + 1;
 port_slot_z   = floor_t + pi_standoff_h - 1.0;
@@ -180,7 +177,7 @@ card_t       = 3.6;
 card_r       = 8;
 card_ch      = 0.8;
 tag_d        = 25.5;   // 25 mm sticker + fit
-tag_recess   = 0.7;
+tag_recess   = 0.4;    // 0.3 sticker + fit
 card_mag_gap = 0.9;    // plastic over the card's magnet
 
 /* -------------------------------------------------------------- layout --- */
@@ -347,10 +344,6 @@ module btn_hole(pos) {
 
 module enc_hole(pos) {
     translate([pos[0], pos[1], -1]) cylinder(d = enc_hole_d, h = plate_t + 2);
-    translate([pos[0] + enc_locator_off * cos(enc_locator_angle),
-               pos[1] + enc_locator_off * sin(enc_locator_angle),
-               plate_t - ctrl_plate_t])
-        cylinder(d = enc_locator_d, h = enc_locator_deep);
 }
 
 // channel the card's rim drops into
@@ -396,7 +389,7 @@ module faceplate() {
             translate([p[0] - btn_relief / 2, p[1] - btn_relief / 2, -0.5])
                 cube([btn_relief, btn_relief, plate_t - ctrl_plate_t + 0.5]);
         translate([enc_pos[0] - enc_relief / 2, enc_pos[1] - enc_relief / 2, -0.5])
-            cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
+            cube([enc_relief, enc_relief, plate_t - enc_plate_t + 0.5]);
 
         // NFC relief, ringed so the centre column stays solid, interrupted where
         // the PN532 posts join the plate
