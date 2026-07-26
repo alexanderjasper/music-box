@@ -10,8 +10,9 @@
 // A filament change at 0.6 mm colours only the engraved icons.
 //
 // Assembly: brass inserts into the shell posts. Magnet up the plate's blind bore
-// until it stops, then glue (every card's magnet faces the opposite pole). Nuts
-// on the buttons and encoder from the top, PN532 on its two posts, buzzer taped
+// until it stops, then glue (every card's magnet faces the opposite pole).
+// Switches in from the top, nuts from inside; encoder from below, nut on top;
+// PN532 on its two posts, buzzer taped
 // into its pocket, Pi onto the floor pegs. Wire per hardware/WIRING.md with
 // ~10 cm slack so the plate lifts off with its controls. 6x M3x12 from the top.
 //
@@ -62,16 +63,18 @@ screw_head_d  = 5.0;
 screw_cb_deep = 3.0;   // head is 3 mm tall, so it sits flush; 0 = on the surface
 
 /* ------------------------------------------------------------ buttons ---- */
-// Latching toggle and momentary transport buttons share a 12 mm bushing. Measured
-// bushings: 7.5 switches, 7.0 encoder, against 3.5 of hardware (nut 2 + washer
-// 1.5) — so one thickness suits both, milled back from underneath, with at least
-// 0.5 mm of thread spare. The reliefs also key the square bodies against rotation.
+// The switches mount from the front: square bezel on the top face, ø12 barrel
+// through the hole, nut and washer tightened from inside. The encoder is the other
+// way round — 12x12 base inside, nut on top. Either way the plate is milled back
+// from underneath to ctrl_plate_t, leaving 4.0-4.5 mm of thread for 3.5 mm of
+// hardware (measured bushings: 7.5 switch, 7.0 encoder).
 
 btn_hole_d   = 12.0;
-btn_body     = 15.0;   // keep-out for the preview
-btn_body_h   = 30.0;   // shoulder to the back, wires included
+btn_barrel   = 13.0;   // round body behind the plate, keep-out for the preview
+btn_body_h   = 30.0;   // bezel back to the terminals, wires included
 ctrl_plate_t = 3.0;
-btn_relief   = 15.6;   // (verify: assumes a 14 mm body)
+btn_nut_af   = 14.0;   // nut across flats (verify)
+btn_relief_d = btn_nut_af / cos(30) + 1.4;   // room to turn the nut in the pocket
 
 /* ------------------------------------------------------------ encoder ---- */
 // KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. No
@@ -85,8 +88,9 @@ enc_board_h  = 20;
 /* --------------------------------------------------------- card / NFC ---- */
 // The card's rim drops into a groove in the plate: it keeps a written title
 // square, marks the spot when empty, and bridges in ~4 mm so the plate can print
-// face down. The magnet holds the card down; the plate is hollowed from
-// underneath so the PN532 reads through a thin membrane.
+// face down. The magnet holds the card down. The plate is NOT thinned here — PLA
+// is transparent at 13.56 MHz, so only distance matters, and the tag ends up
+// plate_t + pn532_standoff = 9 mm from the coil, well inside a PN532's range.
 
 // If the rim ends up tight in the groove, shrink card_size rather than opening up
 // the groove — the card is the cheap part to reprint.
@@ -95,14 +99,10 @@ card_seat_h     = 2.2;    // groove depth
 card_rim_w      = 3.0;
 card_rim_h      = 2.0;
 
-card_pocket_d   = 42;     // relief over the antenna coil
-card_membrane   = 1.2;    // the read path
-
 magnet_d      = 6.06;
 magnet_h      = 2.04;
 magnet_fit    = 0.25;
 magnet_cover  = 1.2;      // plastic between magnet and top face
-magnet_col_d  = magnet_d + 8;   // solid column through the NFC relief
 
 // Two mounting holes on a diagonal 38 mm apart, symmetric about the card spot so
 // the antenna stays centred. If the diagonal isn't 45 deg, measure dx/dy between
@@ -391,22 +391,13 @@ module faceplate() {
 
         card_groove();
 
-        // reliefs so the controls' short bushings reach through
+        // reliefs so the bushings reach through; round at the switches, where the
+        // nut has to be turned inside the pocket
         for (p = [toggle_pos, prev_pos, play_pos, next_pos])
-            translate([p[0] - btn_relief / 2, p[1] - btn_relief / 2, -0.5])
-                cube([btn_relief, btn_relief, plate_t - ctrl_plate_t + 0.5]);
+            translate([p[0], p[1], -0.5])
+                cylinder(d = btn_relief_d, h = plate_t - ctrl_plate_t + 0.5);
         translate([enc_pos[0] - enc_relief / 2, enc_pos[1] - enc_relief / 2, -0.5])
             cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
-
-        // NFC relief, ringed so the centre column stays solid, interrupted where
-        // the PN532 posts join the plate
-        translate([card_pos[0], card_pos[1], -0.5]) difference() {
-            cylinder(d = card_pocket_d, h = plate_t - card_membrane + 0.5);
-            translate([0, 0, -0.5]) cylinder(d = magnet_col_d, h = plate_t + 2);
-            for (p = pn532_hole_pts())
-                translate([p[0] - card_pos[0], p[1] - card_pos[1], -0.5])
-                    cylinder(r = pn532_post_r + 0.8, h = plate_t + 2);
-        }
 
         translate([card_pos[0], card_pos[1], -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
@@ -524,17 +515,13 @@ module testfit() {
             translate([74, y, -6]) cylinder(d = 2 * post_r, h = 6);
         }
         translate([13, y, -1]) cylinder(d = btn_hole_d, h = plate_t + 2);
-        translate([13 - btn_relief / 2, y - btn_relief / 2, -0.5])
-            cube([btn_relief, btn_relief, plate_t - ctrl_plate_t + 0.5]);
+        translate([13, y, -0.5])
+            cylinder(d = btn_relief_d, h = plate_t - ctrl_plate_t + 0.5);
 
         translate([33, y, -1]) cylinder(d = enc_hole_d, h = plate_t + 2);
         translate([33 - enc_relief / 2, y - enc_relief / 2, -0.5])
             cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
 
-        translate([55, y, -0.5]) difference() {
-            cylinder(d = 26, h = plate_t - card_membrane + 0.5);
-            translate([0, 0, -0.5]) cylinder(d = magnet_col_d, h = plate_t + 2);
-        }
         translate([55, y, -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
 
@@ -568,8 +555,8 @@ module ghost_plate_parts() {
             cube([pn532_pcb[0], pn532_pcb[1], 1.6]);
     color("blue", 0.35) {
         for (p = [toggle_pos, prev_pos, play_pos, next_pos])
-            translate([p[0] - btn_body / 2, p[1] - btn_body / 2, -btn_body_h])
-                cube([btn_body, btn_body, btn_body_h]);
+            translate([p[0], p[1], -btn_body_h])
+                cylinder(d = btn_barrel, h = btn_body_h);
         translate([enc_pos[0] - enc_board[0] / 2, enc_pos[1] - enc_board[1] / 2,
                    -enc_board_h])
             cube([enc_board[0], enc_board[1], enc_board_h]);
