@@ -76,10 +76,12 @@ btn_body_h = 30.0;   // bezel back to the terminals, wires included
 
 
 /* ------------------------------------------------------------ encoder ---- */
-// KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. Its
-// 12x12 base sits flat against the plate's underside; the nut does the holding.
+// KY-040 breakout, EC11 with a bare 6 mm knurled shaft. Its 12x12 base sits flat
+// against the plate's underside; the nut does the holding. The bushing measures
+// ø6.8, not the nominal M7, so the hole is that plus 0.3 — printed holes come out
+// a shade undersize, and a 7 mm drill fixes it if this one binds.
 
-enc_hole_d   = 8.0;
+enc_hole_d   = 7.1;
 enc_board    = [19, 26];   // keep-out for the preview
 enc_board_h  = 20;
 
