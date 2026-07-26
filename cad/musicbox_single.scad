@@ -33,8 +33,9 @@ $fs = 0.4;
 
 /* ---------------------------------------------------------------- box ---- */
 // Width and depth are set by the 830-point breadboard (165 x 55) with the Pi
-// behind it; the plate is thick because the card seat and the control reliefs
-// are cut into it.
+// behind it. The plate is as thin as the magnet bore and the card groove allow,
+// which also leaves the controls' bushings enough thread and their nuts in the
+// open — no pockets needed anywhere.
 
 W          = 185;
 D          = 118;
@@ -43,7 +44,7 @@ corner_r   = 6;
 chamfer    = 1.0;
 wall       = 2.4;
 floor_t    = 2.4;
-plate_t    = 6.0;
+plate_t    = 4.0;
 
 shell_h    = H - plate_t;
 
@@ -60,29 +61,25 @@ insert_hole_d = 4.6;   // for the M3 x 5 x 5.0 OD inserts on hand
 insert_depth  = 5.5;
 screw_hole_d  = 3.4;
 screw_head_d  = 5.0;
-screw_cb_deep = 3.0;   // head is 3 mm tall, so it sits flush; 0 = on the surface
+screw_cb_deep = 2.0;   // 3 mm head, so it stands 1 mm proud; 0 = on the surface
 
 /* ------------------------------------------------------------ buttons ---- */
 // The switches mount from the front: square bezel on the top face, ø12 barrel
 // through the hole, nut and washer tightened from inside. The encoder is the other
-// way round — 12x12 base inside, nut on top. Either way the plate is milled back
-// from underneath to ctrl_plate_t, leaving 4.0-4.5 mm of thread for 3.5 mm of
-// hardware (measured bushings: 7.5 switch, 7.0 encoder).
+// way round — 12x12 base inside, nut on top. Measured bushings 7.5 and 7.0, so a
+// 4 mm plate leaves 3.5 and 3.0 mm of thread. That is exactly nut + washer on the
+// switches: drop the washer there if the bushing has an unthreaded root.
 
-btn_hole_d   = 12.0;
-btn_barrel   = 13.0;   // round body behind the plate, keep-out for the preview
-btn_body_h   = 30.0;   // bezel back to the terminals, wires included
-ctrl_plate_t = 3.0;
-btn_nut_af   = 15.0;   // nut across flats
-btn_relief_d = btn_nut_af / cos(30) + 4.7;   // 2.3 mm of plier room round the nut
+btn_hole_d = 12.0;
+btn_barrel = 13.0;   // round body behind the plate, keep-out for the preview
+btn_body_h = 30.0;   // bezel back to the terminals, wires included
 
 
 /* ------------------------------------------------------------ encoder ---- */
-// KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. No
-// locating lug: its 12x12 base sits in the relief, which keys it against rotation.
+// KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. Its
+// 12x12 base sits flat against the plate's underside; the nut does the holding.
 
 enc_hole_d   = 8.0;
-enc_relief   = 12.3;   // 12x12 base, 0.15 per side
 enc_board    = [19, 26];   // keep-out for the preview
 enc_board_h  = 20;
 
@@ -116,9 +113,8 @@ pn532_standoff   = 3.0;
 pn532_post_r     = 3.0;
 
 /* -------------------------------------------------------------- buzzer --- */
-// The can drops into a pocket so its output sits right behind the grille and the
-// holes stay short — 6 mm of ø1.8 hole would muffle it. Two fences flank the PCB;
-// tape or glue it.
+// The can drops into a pocket so its output sits right behind the grille, leaving
+// 1 mm of plate for the holes. Two fences flank the PCB; tape or glue it.
 
 buzz_pcb          = [19.2, 15.2];
 buzz_can_d        = 13.4;         // ø13 can + fit
@@ -392,14 +388,6 @@ module faceplate() {
 
         card_groove();
 
-        // reliefs so the bushings reach through; round at the switches, where the
-        // nut has to be turned inside the pocket
-        for (p = [toggle_pos, prev_pos, play_pos, next_pos])
-            translate([p[0], p[1], -0.5])
-                cylinder(d = btn_relief_d, h = plate_t - ctrl_plate_t + 0.5);
-        translate([enc_pos[0] - enc_relief / 2, enc_pos[1] - enc_relief / 2, -0.5])
-            cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
-
         translate([card_pos[0], card_pos[1], -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
 
@@ -503,9 +491,8 @@ module card() {
 }
 
 /* ============================================================= test fit === */
-// Minimal coupon, printed in the plate's orientation so its holes gauge the real
-// ones. Stations: switch, encoder, card spot, insert boss. The icon sits in spare
-// margin — it costs nothing and checks engraving depth.
+// Minimal coupon, printed in the plate's orientation so its holes and thickness
+// gauge the real ones. Stations: switch, encoder, magnet, insert boss, icon.
 
 module testfit() {
     tf = [82, 32];
@@ -516,12 +503,8 @@ module testfit() {
             translate([74, y, -6]) cylinder(d = 2 * post_r, h = 6);
         }
         btn_hole([13, y]);
-        translate([13, y, -0.5])
-            cylinder(d = btn_relief_d, h = plate_t - ctrl_plate_t + 0.5);
 
         translate([33, y, -1]) cylinder(d = enc_hole_d, h = plate_t + 2);
-        translate([33 - enc_relief / 2, y - enc_relief / 2, -0.5])
-            cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
 
         translate([55, y, -0.01])
             cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
