@@ -74,13 +74,8 @@ btn_barrel   = 13.0;   // round body behind the plate, keep-out for the preview
 btn_body_h   = 30.0;   // bezel back to the terminals, wires included
 ctrl_plate_t = 3.0;
 btn_nut_af   = 15.0;   // nut across flats
-btn_relief_d = btn_nut_af / cos(30) + 1.4;   // room to turn the nut in the pocket
+btn_relief_d = btn_nut_af / cos(30) + 4.7;   // 2.3 mm of plier room round the nut
 
-// Shallow seat on the top face for the square bezel: keys it straight while the
-// nut is tightened, and gains a little thread as a side effect.
-btn_bezel      = 14.0;   // bezel across flats (verify)
-btn_bezel_fit  = 0.3;    // per side
-btn_bezel_deep = 0.4;
 
 /* ------------------------------------------------------------ encoder ---- */
 // KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. No
@@ -200,7 +195,7 @@ buzz_pos   = [48, 14];
 engrave_d    = 0.6;
 icon_size    = 9;
 icon_tri_gap = 1.2;   // between the two triangles in << and >>
-icon_offset  = 7.5;   // icon centre above the button's hole edge
+icon_offset  = 6.5;   // icon centre above the button's hole edge
 
 // the switches hang deepest; they must clear the breadboard and its wiring
 btn_clear   = (shell_h - btn_body_h) - (floor_t + bb[2]);
@@ -353,9 +348,6 @@ module lip() {
 
 module btn_hole(pos) {
     translate([pos[0], pos[1], -1]) cylinder(d = btn_hole_d, h = plate_t + 2);
-    b = btn_bezel + 2 * btn_bezel_fit;
-    translate([pos[0] - b / 2, pos[1] - b / 2, plate_t - btn_bezel_deep])
-        cube([b, b, btn_bezel_deep + 1]);
 }
 
 module enc_hole(pos) {
