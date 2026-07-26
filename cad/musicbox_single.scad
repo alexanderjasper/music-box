@@ -64,13 +64,13 @@ screw_head_d  = 5.0;
 screw_cb_deep = 2.0;   // 3 mm head, so it stands 1 mm proud; 0 = on the surface
 
 /* ------------------------------------------------------------ buttons ---- */
-// The switches mount from the front: square bezel on the top face, ø12 barrel
+// The switches mount from the front: square bezel on the top face, ø11.6 barrel
 // through the hole, nut and washer tightened from inside. The encoder is the other
-// way round — 12x12 base inside, nut on top. Measured bushings 7.5 and 7.0, so a
-// 4 mm plate leaves 3.5 and 3.0 mm of thread. That is exactly nut + washer on the
-// switches: drop the washer there if the bushing has an unthreaded root.
+// way round — 12x12 base inside, nut on top. Bushings measure 7.5 and 7.0 long,
+// threaded end to end, so a 4 mm plate leaves 3.5 and 3.0 mm — exactly nut (2) +
+// washer (1.5) on the switches.
 
-btn_hole_d = 12.0;
+btn_hole_d = 11.8;   // ø11.6 bushing + 0.2
 btn_barrel = 13.0;   // round body behind the plate, keep-out for the preview
 btn_body_h = 30.0;   // bezel back to the terminals, wires included
 
@@ -78,10 +78,9 @@ btn_body_h = 30.0;   // bezel back to the terminals, wires included
 /* ------------------------------------------------------------ encoder ---- */
 // KY-040 breakout, EC11 with a bare 6 mm knurled shaft. Its 12x12 base sits flat
 // against the plate's underside; the nut does the holding. The bushing measures
-// ø6.8, not the nominal M7, so the hole is that plus 0.3 — printed holes come out
-// a shade undersize, and a 7 mm drill fixes it if this one binds.
+// ø6.8, not the nominal M7.
 
-enc_hole_d   = 7.1;
+enc_hole_d   = 7.0;   // ø6.8 bushing + 0.2
 enc_board    = [19, 26];   // keep-out for the preview
 enc_board_h  = 20;
 
