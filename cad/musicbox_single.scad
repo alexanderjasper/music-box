@@ -63,23 +63,21 @@ screw_cb_deep = 3.0;   // head is 3 mm tall, so it sits flush; 0 = on the surfac
 
 /* ------------------------------------------------------------ buttons ---- */
 // Latching toggle and momentary transport buttons share a 12 mm bushing. Measured
-// bushing 7.5, nut 2.0, washer 1.5 — so the plate is milled back from underneath
-// to leave 4.0 mm of thread for 3.5 mm of hardware. The relief also keys the
-// square body against rotation.
+// bushings: 7.5 switches, 7.0 encoder, against 3.5 of hardware (nut 2 + washer
+// 1.5) — so one thickness suits both, milled back from underneath, with at least
+// 0.5 mm of thread spare. The reliefs also key the square bodies against rotation.
 
 btn_hole_d   = 12.0;
 btn_body     = 15.0;   // keep-out for the preview
 btn_body_h   = 16.0;   // (verify)
-ctrl_plate_t = 3.5;
+ctrl_plate_t = 3.0;
 btn_relief   = 15.6;   // (verify: assumes a 14 mm body)
 
 /* ------------------------------------------------------------ encoder ---- */
 // KY-040 breakout, EC11 with an M7 bushing and a bare 6 mm knurled shaft. No
-// locating lug: its 12x12 base sits in the relief, which keys it against
-// rotation. Its bushing is shorter than the switches', hence its own thickness.
+// locating lug: its 12x12 base sits in the relief, which keys it against rotation.
 
 enc_hole_d   = 8.0;
-enc_plate_t  = 2.0;    // (verify: needs bushing length - 2 mm for the nut)
 enc_relief   = 12.6;   // 12x12 base, snug
 enc_board    = [19, 26];   // keep-out for the preview
 enc_board_h  = 20;
@@ -389,7 +387,7 @@ module faceplate() {
             translate([p[0] - btn_relief / 2, p[1] - btn_relief / 2, -0.5])
                 cube([btn_relief, btn_relief, plate_t - ctrl_plate_t + 0.5]);
         translate([enc_pos[0] - enc_relief / 2, enc_pos[1] - enc_relief / 2, -0.5])
-            cube([enc_relief, enc_relief, plate_t - enc_plate_t + 0.5]);
+            cube([enc_relief, enc_relief, plate_t - ctrl_plate_t + 0.5]);
 
         // NFC relief, ringed so the centre column stays solid, interrupted where
         // the PN532 posts join the plate
