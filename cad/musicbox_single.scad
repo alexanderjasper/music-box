@@ -92,13 +92,13 @@ knob_gap      = 0.5;    // knob underside to plate
 knob_top      = 1.2;    // skin over the end of the shaft
 knob_nut_d    = 12.5;   // recess that swallows the encoder's nut (verify: across
                         // corners, ~11.5 for a 10 mm across-flats nut)
-knob_nut_h    = 3.5;
+knob_nut_min  = 3.5;    // depth the nut alone needs
 knob_flutes   = 14;
 knob_flute_d  = 2.4;
 
 // Measured shaft: ø6, standing 15.5 above the plate, with the flat cut over the
-// top 10 mm only — so the bore is round for the lower stretch and D-shaped above,
-// or it would jam 1.5 mm short of seating.
+// top 10 mm only. The bore can only grip where that flat is, so the nut recess is
+// deepened to clear the round stretch and the D starts at the recess floor.
 knob_shaft_up   = 15.5;
 knob_shaft_d    = 6.0;
 knob_shaft_flat = 4.5;   // thickness across the flat; 0 = a plain round shaft
@@ -108,9 +108,14 @@ knob_flat_margin = 0.5;  // start the D this far below where the flat should beg
 knob_bore_fit = 0.0;    // press fit, no glue: printed holes come out undersize
                         // anyway. Raise to 0.1 if it will not go on.
 
-knob_bore_h   = knob_shaft_up - knob_gap;          // the shaft is fully swallowed
-knob_round_h  = knob_bore_h - knob_shaft_flat_len; // ...round up to here
-knob_h        = knob_bore_h + knob_top;
+knob_bore_h  = knob_shaft_up - knob_gap;   // the shaft is fully swallowed
+// The shaft is round below its flat, so the bore can't grip there. Rather than a
+// useless round step in front of the D, the nut recess is deepened to clear that
+// stretch — so the flat starts right at the recess floor.
+knob_round_h = max(0, knob_bore_h - knob_shaft_flat_len);
+knob_flat_z  = knob_round_h > 0 ? knob_round_h + knob_flat_margin : 0;
+knob_nut_h   = max(knob_nut_min, knob_flat_z);
+knob_h       = knob_bore_h + knob_top;
 
 vol_mark_off  = 14;   // as engraved on the first plate — don't move it
 if (knob_d / 2 > vol_mark_off - 3.0)
@@ -526,16 +531,14 @@ module knob() {
         // recess that hides the encoder's nut
         translate([0, 0, -0.01]) cylinder(d = knob_nut_d, h = knob_nut_h);
 
-        // Shaft bore: round where the shaft is round, D-shaped where it has its
-        // flat. The flat is what stops the knob slipping.
+        // Shaft bore: D-shaped the whole way, starting where the shaft's flat does.
+        // The flat is what stops the knob slipping.
         bd  = knob_shaft_d + knob_bore_fit;
         off = knob_shaft_flat > 0 ? knob_shaft_flat - bd / 2 : bd;
-        rh = knob_round_h + knob_flat_margin;
-        translate([0, 0, -0.01]) cylinder(d = bd, h = rh);
-        translate([0, 0, rh]) intersection() {
-            cylinder(d = bd, h = knob_bore_h - rh);
+        translate([0, 0, knob_flat_z]) intersection() {
+            cylinder(d = bd, h = knob_bore_h - knob_flat_z);
             translate([-bd, -bd, -0.5])
-                cube([2 * bd, bd + off, knob_bore_h - rh + 1]);
+                cube([2 * bd, bd + off, knob_bore_h - knob_flat_z + 1]);
         }
 
     }
