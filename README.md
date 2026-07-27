@@ -420,8 +420,8 @@ web simulator, and — now — the **real GPIO panel on the Pi**.
     that runs it at boot.
 - **CLI simulator** — `python -m musicbox`, simulates the panel via typed commands.
 - **Web app** — `python -m web.server`: the faceplate at `/` **and the config app at
-  `/config`** — map room slots → Sonos rooms, bind NFC tags → favorites (with live
-  place-a-card enrollment). On the device this is served at `musicbox.local`.
+  `/config`** — map room slots → Sonos rooms, bind NFC tags → **Sonos favorites or
+  Sonos playlists** (with live place-a-card enrollment). On the device this is served at `musicbox.local`.
 - **Config files** in `software/` (copy from each `*.example.json`): `hardware.json`
   (which controls exist + their pins — hand-edited as you wire), `rooms.json`
   (slot → Sonos room) and `cards.json` (tag UID → favorite). The last two are written

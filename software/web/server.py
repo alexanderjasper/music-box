@@ -75,6 +75,12 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
         except Exception:
             return []
 
+    def playlists_list(refresh=False):
+        try:
+            return box.playlist_titles(refresh=refresh)
+        except Exception:
+            return []
+
     @app.get("/")
     def index():
         return render_template(
@@ -118,6 +124,7 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
             "room_map": dict(room_map),
             "cards": dict(box.card_map),
             "favorites": favorites_list(refresh=True),
+            "playlists": playlists_list(refresh=True),
             "nfc_last": nfc_last() if nfc_last else None,
         })
 

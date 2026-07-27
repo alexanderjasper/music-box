@@ -104,7 +104,7 @@
   </section>
 
 <script>
-let CFG = { sonos_rooms: [], slots: [], room_map: {}, cards: {}, favorites: [], nfc_last: null };
+let CFG = { sonos_rooms: [], slots: [], room_map: {}, cards: {}, favorites: [], playlists: [], nfc_last: null };
 
 async function load() {
   CFG = await (await fetch("/api/config")).json();
@@ -112,7 +112,7 @@ async function load() {
   if (CFG.sonos_rooms.length)
     conn.textContent = `Connected — Sonos rooms: ${CFG.sonos_rooms.join(", ")}`;
   else
-    conn.textContent = "Not connected to Sonos — room/favorite lists will be empty until the box can reach the speakers.";
+    conn.textContent = "Not connected to Sonos — room, favorite and playlist lists will be empty until the box can reach the speakers.";
   renderRooms(); renderFavorites(); renderCards();
 }
 
@@ -138,8 +138,11 @@ function renderRooms() {
 
 function renderFavorites() {
   const sel = document.getElementById("cardFav");
-  if (!CFG.favorites.length) { sel.innerHTML = '<option value="">(no favorites found)</option>'; return; }
-  sel.innerHTML = CFG.favorites.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+  const opts = t => t.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+  const group = (label, titles) =>
+    titles.length ? `<optgroup label="${label}">${opts(titles)}</optgroup>` : "";
+  const html = group("Favorites", CFG.favorites) + group("Sonos playlists", CFG.playlists);
+  sel.innerHTML = html || '<option value="">(nothing found)</option>';
 }
 
 function renderCards() {
@@ -214,7 +217,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 
 load();
 setInterval(pollNfc, 1000);
-setInterval(load, 15000);  // refresh rooms/favorites occasionally
+setInterval(load, 15000);  // refresh rooms/favorites/playlists occasionally
 </script>
 </body>
 </html>
