@@ -416,7 +416,8 @@ web simulator, and — now — the **real GPIO panel on the Pi**.
     buttons, volume encoders, the PN532 reader, the piezo), wiring them to the core
     via the slot→room map. **Adding a part is a JSON edit, not a code change.**
   - **`musicbox/service.py`** — the on-device service: the panel **and** the config
-    web app over one shared box.
+    web app over one shared box. `software/musicbox.service` is the systemd unit
+    that runs it at boot.
 - **CLI simulator** — `python -m musicbox`, simulates the panel via typed commands.
 - **Web app** — `python -m web.server`: the faceplate at `/` **and the config app at
   `/config`** — map room slots → Sonos rooms, bind NFC tags → favorites (with live
@@ -446,6 +447,19 @@ pip install --break-system-packages -r requirements-pi.txt
 cp hardware.example.json hardware.json     # then edit to match your wiring
 python -m musicbox.service                 # then open http://musicbox.local:8080
 ```
+
+Then start it at boot, so the box works when you just plug it in:
+
+```
+sudo cp musicbox.service /etc/systemd/system/    # check User= and WorkingDirectory=
+sudo systemctl enable --now musicbox
+journalctl -u musicbox -f                        # follow the log
+```
+
+It waits for the network (SoCo discovers Sonos at startup) and restarts on crash.
+When you switch the root filesystem to read-only (open question #8), set
+`MUSICBOX_DATA_DIR` in the unit to a writable mount — otherwise the cards and rooms
+the web app saves land in the RAM overlay and disappear on the next reboot.
 
 To push code updates from your laptop afterwards, use `software/sync.sh`. It
 rsyncs everything **except** the device's own runtime config (`cards.json`,

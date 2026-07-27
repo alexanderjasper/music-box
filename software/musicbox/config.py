@@ -25,9 +25,16 @@ import tempfile
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # the software/ dir
 
+# Where the two web-editable files live. Defaults to software/, alongside the code,
+# which is what sync.sh preserves across deploys. Point MUSICBOX_DATA_DIR at a
+# writable mount when the root filesystem goes read-only, or saves land in the RAM
+# overlay and vanish on reboot. (hardware.json is hand-edited, never written, so it
+# stays with the code either way.)
+DATA_DIR = os.environ.get("MUSICBOX_DATA_DIR") or HERE
+
 
 def _path(name, path):
-    return path if path else os.path.join(HERE, name)
+    return path if path else os.path.join(DATA_DIR, name)
 
 
 def _atomic_write_json(path, data):
@@ -62,7 +69,7 @@ def _load_map(name, example, path=None):
             return {}
         p = path
     else:
-        p = os.path.join(HERE, name)
+        p = os.path.join(DATA_DIR, name)
         if not os.path.exists(p):
             ex = os.path.join(HERE, example)
             if not os.path.exists(ex):
