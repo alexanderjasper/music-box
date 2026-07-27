@@ -20,7 +20,7 @@
 // part = "testfit" first and check them.
 
 /* [View] */
-part = "assembly";  // [assembly, shell, faceplate, card, testfit]
+part = "knob";  // [assembly, shell, faceplate, card, knob, testfit]
 // lift the stack apart, mm
 explode = 80;        // [0:1:80]
 // cut away everything right of section_x
@@ -83,6 +83,33 @@ btn_body_h = 30.0;   // bezel back to the terminals, wires included
 enc_hole_d   = 7.0;   // ø6.8 bushing + 0.2
 enc_board    = [19, 26];   // keep-out for the preview
 enc_board_h  = 20;
+
+// A printed knob presses onto the shaft. Prints top-face down, so the bore and
+// the nut recess open upward and nothing overhangs.
+knob_d        = 20;   // must clear the volume marks — see the check below
+knob_h        = 13;
+knob_ch       = 1.0;    // top-edge chamfer
+knob_shaft_up = 15.0;   // how far the shaft stands above the plate (verify)
+knob_shaft_d  = 6.0;    // shaft diameter (verify)
+knob_shaft_flat = 4.5;  // D-shaft: thickness across the flat (verify) — 0 = round
+knob_bore_fit = 0.0;    // press fit, no glue: printed holes come out undersize
+                        // anyway. Raise to 0.1 if it will not go on.
+knob_nut_d    = 14;     // recess that swallows the encoder's nut
+knob_nut_h    = 3.5;
+knob_gap      = 0.5;    // knob underside to plate
+knob_flutes   = 16;
+knob_flute_d  = 2.4;
+
+// grip the shaft over as much of it as the knob can reach
+knob_bore_h   = min(knob_shaft_up - knob_gap + 0.5, knob_h - 2);
+if (knob_bore_h - knob_nut_h < 5)
+    echo(str("WARNING: only ", knob_bore_h - knob_nut_h,
+             " mm of shaft in the knob's bore — raise knob_h or lower knob_nut_h"));
+
+vol_mark_off  = 14;   // as engraved on the first plate — don't move it
+if (knob_d / 2 > vol_mark_off - 3.0)
+    echo(str("WARNING: a ø", knob_d, " knob overlaps the volume marks at ",
+             vol_mark_off, " — max is ø", 2 * (vol_mark_off - 3.0)));
 
 /* --------------------------------------------------------- card / NFC ---- */
 // The card's rim drops into a groove in the plate: it keeps a written title
@@ -468,8 +495,36 @@ module icons() {
     engrave([play_pos[0], play_pos[1] + off]) icon_play_pause(icon_size);
     engrave([next_pos[0], next_pos[1] + off]) icon_next(icon_size);
     engrave([toggle_pos[0], toggle_pos[1] + off]) icon_power(icon_size);
-    engrave([enc_pos[0] - 14, enc_pos[1]]) icon_minus(5);
-    engrave([enc_pos[0] + 14, enc_pos[1]]) icon_plus(5);
+    engrave([enc_pos[0] - vol_mark_off, enc_pos[1]]) icon_minus(5);
+    engrave([enc_pos[0] + vol_mark_off, enc_pos[1]]) icon_plus(5);
+}
+
+/* ================================================================ knob === */
+
+module knob() {
+    difference() {
+        union() {
+            cylinder(d = knob_d, h = knob_h - knob_ch);
+            translate([0, 0, knob_h - knob_ch])
+                cylinder(d1 = knob_d, d2 = knob_d - 2 * knob_ch, h = knob_ch);
+        }
+        // finger flutes round the rim
+        for (i = [0 : knob_flutes - 1]) rotate([0, 0, i * 360 / knob_flutes])
+            translate([knob_d / 2, 0, -1]) cylinder(d = knob_flute_d, h = knob_h + 2);
+
+        // recess that hides the encoder's nut
+        translate([0, 0, -0.01]) cylinder(d = knob_nut_d, h = knob_nut_h);
+
+        // Shaft bore. The D-shaft's flat is what stops the knob slipping, so the
+        // bore keeps it: a cylinder cut off at the flat's distance from the axis.
+        bd  = knob_shaft_d + knob_bore_fit;
+        off = knob_shaft_flat > 0 ? knob_shaft_flat - bd / 2 : bd;
+        translate([0, 0, -0.01]) intersection() {
+            cylinder(d = bd, h = knob_bore_h);
+            translate([-bd, -bd, -0.5]) cube([2 * bd, bd + off, knob_bore_h + 1]);
+        }
+
+    }
 }
 
 /* ================================================================ card === */
@@ -564,6 +619,7 @@ module assembly() {
     }
     %translate([card_pos[0] - card_size[0] / 2, card_pos[1] - card_size[1] / 2,
                 H + 2 * explode]) card();
+    translate([enc_pos[0], enc_pos[1], H + knob_gap + 2 * explode]) knob();
 }
 
 module output() {
@@ -573,6 +629,8 @@ module output() {
         translate([0, D, plate_t]) rotate([180, 0, 0]) faceplate();
     else if (part == "card")
         translate([0, card_size[1], card_t]) rotate([180, 0, 0]) card();
+    else if (part == "knob")
+        translate([0, 0, knob_h]) rotate([180, 0, 0]) knob();
     else if (part == "testfit")
         translate([0, 50, plate_t]) rotate([180, 0, 0]) testfit();
     else echo("unknown part");
