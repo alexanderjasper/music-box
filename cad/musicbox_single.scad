@@ -536,10 +536,13 @@ module knob() {
         // The flat is what stops the knob slipping.
         bd  = knob_shaft_d + knob_bore_fit;
         off = knob_shaft_flat > 0 ? knob_shaft_flat - bd / 2 : bd;
-        translate([0, 0, knob_flat_z]) intersection() {
-            cylinder(d = bd, h = knob_bore_h - knob_flat_z);
+        // start it inside the recess rather than exactly at its floor: coincident
+        // faces render as a membrane in preview and look like a solid floor
+        z0 = max(0, knob_flat_z - 1);
+        translate([0, 0, z0]) intersection() {
+            cylinder(d = bd, h = knob_bore_h - z0);
             translate([-bd, -bd, -0.5])
-                cube([2 * bd, bd + off, knob_bore_h - knob_flat_z + 1]);
+                cube([2 * bd, bd + off, knob_bore_h - z0 + 1]);
         }
 
     }
