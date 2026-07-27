@@ -1,0 +1,36 @@
+# systemd unit for the Music Box — the panel and the config web app together.
+#
+# Install (on the Pi):
+#     sudo cp ~/software/musicbox.service /etc/systemd/system/
+#     sudo systemctl enable --now musicbox
+#     journalctl -u musicbox -f
+#
+# Check User= and WorkingDirectory= match where sync.sh puts the code. The user
+# must be in the gpio and i2c groups (the default Raspberry Pi OS user is).
+
+[Unit]
+Description=Music Box (panel + config web app)
+Documentation=https://github.com/alexanderjasper/music-box
+# SoCo discovers Sonos at startup, so wait for a usable network
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=alexander
+WorkingDirectory=/home/alexander/software
+# The Pi uses the system Python, where the GPIO/I2C backends live
+ExecStart=/usr/bin/python3 -m musicbox.service
+Environment=PYTHONUNBUFFERED=1
+Environment=MUSICBOX_PORT=8080
+# Set this to a writable mount once the root filesystem goes read-only, or the
+# web app's card and room edits will vanish on reboot
+#Environment=MUSICBOX_DATA_DIR=/data/musicbox
+
+# SIGINT rather than SIGTERM, so Python raises KeyboardInterrupt and the service
+# releases the GPIO pins on its way out
+KillSignal=SIGINT
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
