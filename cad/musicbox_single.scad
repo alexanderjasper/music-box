@@ -19,15 +19,16 @@
 // Dimensions marked (verify) come from listings, not from parts in hand — print
 // part = "testfit" first and check them.
 
-/* [View] */
-part = "knob";  // [assembly, shell, faceplate, card, knob, testfit]
-// lift the stack apart, mm
-explode = 80;        // [0:1:80]
-// cut away everything right of section_x
-section = false;    // [true, false]
-section_x = 48;     // [0:1:185]
+// What to render. Set it here, or override it from the command line with
+//   OpenSCAD -o knob.stl -D 'part="knob"' musicbox_single.scad
+// Deliberately NOT annotated for the Customizer: with that panel open, it takes
+// ownership of these values and quietly renders its own instead of the file's.
+part = "knob";   // assembly | shell | faceplate | card | knob | testfit
 
-/* [Hidden] */
+explode   = 0;       // assembly view: lift the stack apart, mm
+section   = false;   // cut away everything right of section_x
+section_x = 48;
+
 $fa = 2;
 $fs = 0.4;
 
