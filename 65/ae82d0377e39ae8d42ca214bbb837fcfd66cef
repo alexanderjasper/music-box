@@ -1,0 +1,27 @@
+README.md
+  s_ea40d3bb0f9f68::t_8f82b02a5bbc6f 423-424
+software/musicbox/core.py
+  s_ea40d3bb0f9f68::t_af75b59e3288c3 41,51,160,163,165,252-269,272-277,279-280,282,285,288-294,296,298,300-301,303-306,310-312
+software/tests/test_core.py
+  s_ea40d3bb0f9f68::t_5d03eb624d71d2 45-53,63,68,72-74,127,129,231-247
+software/web/server.py
+  s_ea40d3bb0f9f68::t_5d4de033b0c881 78-83,127
+software/web/templates/config.html
+  s_ea40d3bb0f9f68::t_bae0350a7d722f 107,115,141-145,220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "65ae82d0377e39ae8d42ca214bbb837fcfd66cef",
+  "prompts": {},
+  "sessions": {
+    "s_ea40d3bb0f9f68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0a09bc-8dec-4572-930c-1437de081fb8",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
