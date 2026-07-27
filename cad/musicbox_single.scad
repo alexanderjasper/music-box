@@ -86,30 +86,39 @@ enc_board_h  = 20;
 
 // A printed knob presses onto the shaft. Prints top-face down, so the bore and
 // the nut recess open upward and nothing overhangs.
-knob_d        = 20;   // must clear the volume marks — see the check below
-knob_h        = 13;
+knob_d        = 18;     // over the ridges; the nut recess sets the lower limit
 knob_ch       = 1.0;    // top-edge chamfer
-knob_shaft_up = 15.0;   // how far the shaft stands above the plate (verify)
-knob_shaft_d  = 6.0;    // shaft diameter (verify)
-knob_shaft_flat = 4.5;  // D-shaft: thickness across the flat (verify) — 0 = round
-knob_bore_fit = 0.0;    // press fit, no glue: printed holes come out undersize
-                        // anyway. Raise to 0.1 if it will not go on.
-knob_nut_d    = 14;     // recess that swallows the encoder's nut
-knob_nut_h    = 3.5;
 knob_gap      = 0.5;    // knob underside to plate
-knob_flutes   = 16;
+knob_top      = 1.2;    // skin over the end of the shaft
+knob_nut_d    = 12.5;   // recess that swallows the encoder's nut (verify: across
+                        // corners, ~11.5 for a 10 mm across-flats nut)
+knob_nut_h    = 3.5;
+knob_flutes   = 14;
 knob_flute_d  = 2.4;
 
-// grip the shaft over as much of it as the knob can reach
-knob_bore_h   = min(knob_shaft_up - knob_gap + 0.5, knob_h - 2);
-if (knob_bore_h - knob_nut_h < 5)
-    echo(str("WARNING: only ", knob_bore_h - knob_nut_h,
-             " mm of shaft in the knob's bore — raise knob_h or lower knob_nut_h"));
+// Measured shaft: ø6, standing 15.5 above the plate, with the flat cut over the
+// top 10 mm only — so the bore is round for the lower stretch and D-shaped above,
+// or it would jam 1.5 mm short of seating.
+knob_shaft_up   = 15.5;
+knob_shaft_d    = 6.0;
+knob_shaft_flat = 4.5;   // thickness across the flat; 0 = a plain round shaft
+knob_shaft_flat_len = 10;
+knob_bore_fit = 0.0;    // press fit, no glue: printed holes come out undersize
+                        // anyway. Raise to 0.1 if it will not go on.
+
+knob_bore_h   = knob_shaft_up - knob_gap;          // the shaft is fully swallowed
+knob_round_h  = knob_bore_h - knob_shaft_flat_len; // ...round up to here
+knob_h        = knob_bore_h + knob_top;
 
 vol_mark_off  = 14;   // as engraved on the first plate — don't move it
 if (knob_d / 2 > vol_mark_off - 3.0)
     echo(str("WARNING: a ø", knob_d, " knob overlaps the volume marks at ",
              vol_mark_off, " — max is ø", 2 * (vol_mark_off - 3.0)));
+// the flutes are centred on the rim, so they cut half their diameter deep
+knob_valley_r = knob_d / 2 - knob_flute_d / 2;
+if (knob_valley_r - knob_nut_d / 2 < 1.2)
+    echo(str("WARNING: only ", knob_valley_r - knob_nut_d / 2,
+             " mm of wall between the flute valleys and the nut recess"));
 
 /* --------------------------------------------------------- card / NFC ---- */
 // The card's rim drops into a groove in the plate: it keeps a written title
@@ -515,13 +524,15 @@ module knob() {
         // recess that hides the encoder's nut
         translate([0, 0, -0.01]) cylinder(d = knob_nut_d, h = knob_nut_h);
 
-        // Shaft bore. The D-shaft's flat is what stops the knob slipping, so the
-        // bore keeps it: a cylinder cut off at the flat's distance from the axis.
+        // Shaft bore: round where the shaft is round, D-shaped where it has its
+        // flat. The flat is what stops the knob slipping.
         bd  = knob_shaft_d + knob_bore_fit;
         off = knob_shaft_flat > 0 ? knob_shaft_flat - bd / 2 : bd;
-        translate([0, 0, -0.01]) intersection() {
-            cylinder(d = bd, h = knob_bore_h);
-            translate([-bd, -bd, -0.5]) cube([2 * bd, bd + off, knob_bore_h + 1]);
+        translate([0, 0, -0.01]) cylinder(d = bd, h = knob_round_h + 0.2);
+        translate([0, 0, knob_round_h + 0.2]) intersection() {
+            cylinder(d = bd, h = knob_bore_h - knob_round_h);
+            translate([-bd, -bd, -0.5])
+                cube([2 * bd, bd + off, knob_bore_h - knob_round_h + 1]);
         }
 
     }
