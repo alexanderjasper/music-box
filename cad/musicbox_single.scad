@@ -103,6 +103,8 @@ knob_shaft_up   = 15.5;
 knob_shaft_d    = 6.0;
 knob_shaft_flat = 4.5;   // thickness across the flat; 0 = a plain round shaft
 knob_shaft_flat_len = 10;
+knob_flat_margin = 0.5;  // start the D this far below where the flat should begin,
+                         // so a slightly longer round stretch can't jam the knob
 knob_bore_fit = 0.0;    // press fit, no glue: printed holes come out undersize
                         // anyway. Raise to 0.1 if it will not go on.
 
@@ -528,11 +530,12 @@ module knob() {
         // flat. The flat is what stops the knob slipping.
         bd  = knob_shaft_d + knob_bore_fit;
         off = knob_shaft_flat > 0 ? knob_shaft_flat - bd / 2 : bd;
-        translate([0, 0, -0.01]) cylinder(d = bd, h = knob_round_h + 0.2);
-        translate([0, 0, knob_round_h + 0.2]) intersection() {
-            cylinder(d = bd, h = knob_bore_h - knob_round_h);
+        rh = knob_round_h + knob_flat_margin;
+        translate([0, 0, -0.01]) cylinder(d = bd, h = rh);
+        translate([0, 0, rh]) intersection() {
+            cylinder(d = bd, h = knob_bore_h - rh);
             translate([-bd, -bd, -0.5])
-                cube([2 * bd, bd + off, knob_bore_h - knob_round_h + 1]);
+                cube([2 * bd, bd + off, knob_bore_h - rh + 1]);
         }
 
     }
