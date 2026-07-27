@@ -274,10 +274,17 @@ class MusicBox:
             return False  # unparseable metadata: treat as a stream, try play_uri
 
     def _find_favorite(self, query):
+        """Match a favorite by title substring, re-reading Sonos on a miss.
+
+        The favorites list is cached, so a favorite added in the Sonos app after
+        the box started would otherwise stay invisible until a restart. A miss is
+        rare and cheap, so it costs one refresh rather than a stale error beep.
+        """
         q = query.lower()
-        for fav in self._favorites():
-            if q in fav.title.lower():
-                return fav
+        for refresh in (False, True):
+            for fav in self._favorites(refresh=refresh):
+                if q in fav.title.lower():
+                    return fav
         return None
 
     def _group_armed(self):

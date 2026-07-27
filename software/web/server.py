@@ -69,9 +69,9 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
         "previous": lambda a: box.previous(),
     }
 
-    def favorites_list():
+    def favorites_list(refresh=False):
         try:
-            return box.favorite_titles()
+            return box.favorite_titles(refresh=refresh)
         except Exception:
             return []
 
@@ -109,12 +109,15 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
 
     @app.get("/api/config")
     def get_config():
+        # The config page is opened rarely and is exactly where a favorite added
+        # in the Sonos app needs to show up, so re-read the list every time. It
+        # also freshens the shared cache the playback path matches against.
         return jsonify({
             "sonos_rooms": box.rooms(),
             "slots": slot_ids,
             "room_map": dict(room_map),
             "cards": dict(box.card_map),
-            "favorites": favorites_list(),
+            "favorites": favorites_list(refresh=True),
             "nfc_last": nfc_last() if nfc_last else None,
         })
 
