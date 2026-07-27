@@ -38,7 +38,7 @@ def _norm(s):
 class MusicBox:
     def __init__(self, card_map=None, buzzer=None):
         self.buzzer = buzzer or SilentBuzzer()
-        self.card_map = dict(card_map or {})  # card id -> favorite query string
+        self.card_map = dict(card_map or {})  # card id -> favorite/playlist query
         self.speakers = {}                     # room name -> SoCo device
         self.armed = set()                     # armed room names
         self.shuffle = False
@@ -48,6 +48,7 @@ class MusicBox:
         self.playing = False
         self.coordinator_name = None
         self._fav_cache = None
+        self._playlist_cache = None
 
     # --- setup -----------------------------------------------------------
 
@@ -156,12 +157,12 @@ class MusicBox:
         # through to pause/resume below, same as the no-card case.
         if self.current_card and not self._card_started:
             query = self.card_map[self.current_card]
-            fav = self._find_favorite(query)
+            fav = self._find_playable(query)
             if not fav:
                 self.buzzer.error()
-                return _err(f"No Sonos favorite matches {query!r}.")
+                return _err(f"No Sonos favorite or playlist matches {query!r}.")
             try:
-                self._start_favorite(coordinator, fav)
+                self._start_item(coordinator, fav)
             except SoCoException as e:
                 self.buzzer.error()
                 return _err(f"Sonos refused to play: {e}")
@@ -248,43 +249,67 @@ class MusicBox:
         """The live Sonos Favorite titles — what the config UI lists to bind cards to."""
         return [fav.title for fav in self._favorites(refresh=refresh)]
 
-    def _start_favorite(self, coordinator, fav):
-        """Begin playback of a Sonos favorite, whichever kind it is.
+    def _playlists(self, refresh=False):
+        """Sonos playlists — saved queues, which are *not* in the favorites list."""
+        if self._playlist_cache is None or refresh:
+            if not self.speakers:
+                return []
+            any_speaker = next(iter(self.speakers.values()))
+            try:
+                self._playlist_cache = list(any_speaker.get_sonos_playlists())
+            except Exception:
+                self._playlist_cache = []   # older soco, or a fake speaker
+        return self._playlist_cache
+
+    def playlist_titles(self, refresh=False):
+        """The live Sonos playlist titles, also bindable to a card."""
+        return [pl.title for pl in self._playlists(refresh=refresh)]
+
+    def _start_item(self, coordinator, item):
+        """Begin playback of a favorite or a Sonos playlist, whichever it is.
 
         A favorite points either to a single, directly-playable stream (a track
-        or a radio station) or to a *container* — an album, playlist or artist.
-        Only a stream can be handed to play_uri / SetAVTransportURI; doing that
-        with a container makes Sonos reject it with UPnP 714 "Illegal MIME-Type".
-        Containers have to be loaded into the queue and played from there, which
-        is also what lets shuffle/repeat span the whole album.
+        or a radio station) or to a *container* — an album, playlist or artist. A
+        Sonos playlist is always a container, and is itself the item rather than a
+        wrapper around one. Only a stream can be handed to play_uri /
+        SetAVTransportURI; doing that with a container makes Sonos reject it with
+        UPnP 714 "Illegal MIME-Type". Containers have to be loaded into the queue
+        and played from there, which is also what lets shuffle/repeat span them.
         """
-        if self._is_container(fav):
+        target = self._container_target(item)
+        if target is not None:
             coordinator.clear_queue()
-            coordinator.add_to_queue(fav.reference)
+            coordinator.add_to_queue(target)
             coordinator.play_from_queue(0)
         else:
-            coordinator.play_uri(fav.resources[0].uri, meta=fav.resource_meta_data)
+            coordinator.play_uri(item.resources[0].uri, meta=item.resource_meta_data)
 
     @staticmethod
-    def _is_container(fav):
-        """True if the favorite points to an album/playlist/artist, not a stream."""
+    def _container_target(item):
+        """What to load into the queue, or None if the item should be streamed.
+
+        Favorites wrap the thing they point at in `.reference`; a Sonos playlist
+        *is* the thing.
+        """
+        target = getattr(item, "reference", item)
         try:
-            return fav.reference.item_class.startswith("object.container")
+            return target if target.item_class.startswith("object.container") else None
         except Exception:
-            return False  # unparseable metadata: treat as a stream, try play_uri
+            return None  # unparseable metadata: treat as a stream, try play_uri
 
-    def _find_favorite(self, query):
-        """Match a favorite by title substring, re-reading Sonos on a miss.
+    def _find_playable(self, query):
+        """Match a favorite or Sonos playlist by title substring.
 
-        The favorites list is cached, so a favorite added in the Sonos app after
-        the box started would otherwise stay invisible until a restart. A miss is
-        rare and cheap, so it costs one refresh rather than a stale error beep.
+        Both lists are cached, so something added in the Sonos app after the box
+        started would otherwise stay invisible until a restart. A miss is rare and
+        cheap, so it costs one refresh rather than a stale error beep. Favorites
+        win over playlists of the same name.
         """
         q = query.lower()
         for refresh in (False, True):
-            for fav in self._favorites(refresh=refresh):
-                if q in fav.title.lower():
-                    return fav
+            for item in self._favorites(refresh=refresh) + self._playlists(refresh=refresh):
+                if q in item.title.lower():
+                    return item
         return None
 
     def _group_armed(self):

@@ -42,6 +42,15 @@ class FakeFavorite:
         return types.SimpleNamespace(item_class=self.item_class, resources=self.resources)
 
 
+class FakePlaylist:
+    """A Sonos playlist as soco returns it: the container itself, no .reference."""
+
+    def __init__(self, title):
+        self.title = title
+        self.item_class = "object.container.playlistContainer"
+        self.resources = [types.SimpleNamespace(uri=f"pl:{title}")]
+
+
 class FakeLibrary:
     def __init__(self, favorites):
         self._favs = favorites
@@ -51,13 +60,17 @@ class FakeLibrary:
 
 
 class FakeSpeaker:
-    def __init__(self, name, favorites):
+    def __init__(self, name, favorites, playlists=()):
         self.player_name = name
         self.volume = 30
         self.play_mode = "NORMAL"
         self.music_library = FakeLibrary(favorites)
+        self._playlists = list(playlists)
         self.transport_state = "STOPPED"
         self.log = []
+
+    def get_sonos_playlists(self):
+        return self._playlists
 
     def join(self, master):
         self.log.append(f"join:{master.player_name}")
@@ -111,8 +124,9 @@ class RecordingBuzzer(Buzzer):
 def make_box():
     favs = [FakeFavorite("Bohemian Rhapsody"), FakeFavorite("Discover Sonos Radio"),
             FakeFavorite("Greatest Hits", item_class="object.container.album.musicAlbum")]
+    pls = [FakePlaylist("Saturday Kitchen")]
     box = MusicBox(card_map={"bohemian": "Bohemian Rhapsody"}, buzzer=RecordingBuzzer())
-    box.speakers = {n: FakeSpeaker(n, favs) for n in ("Alrum", "Køkken", "Grys værelse")}
+    box.speakers = {n: FakeSpeaker(n, favs, pls) for n in ("Alrum", "Køkken", "Grys værelse")}
     return box
 
 
@@ -214,6 +228,23 @@ def main():
     check("album added to the queue", any(e.startswith("add_to_queue:") for e in log))
     check("album played from the queue", "play_from_queue:0" in log)
     check("album did NOT use play_uri", not any("play_uri" in e for e in log))
+    # Sonos playlists are bindable too, and are containers like an album — but
+    # without the favorite's .reference wrapper, so the queue path must take the
+    # item itself
+    boxP = make_box()
+    check("playlists are offered alongside favorites",
+          "Saturday Kitchen" in boxP.playlist_titles()
+          and "Saturday Kitchen" not in boxP.favorite_titles())
+    boxP.card_map["party"] = "Saturday Kitchen"
+    boxP.toggle_room("Køkken")
+    boxP.place_card("party")
+    r = boxP.play()
+    plog = boxP.speakers["Køkken"].log
+    check("playlist play succeeds", r["ok"])
+    check("playlist queued, not streamed",
+          "clear_queue" in plog and "add_to_queue:pl:Saturday Kitchen" in plog
+          and "play_from_queue:0" in plog and not any("play_uri" in e for e in plog))
+
     # queued album means prev/next navigate its tracks on the coordinator
     check("next works on a queued album", boxA.next()["ok"])
     check("coordinator got next", "next" in log)
