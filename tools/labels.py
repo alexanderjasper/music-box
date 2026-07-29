@@ -16,6 +16,10 @@ You name the slots, so a part-used sheet can be finished off later:
 
 Print at 100% / "actual size" with no page scaling, or the alignment is lost.
 
+Images overshoot each label by 1 mm by default, so a die-cut that sits a few
+tenths off still comes out edge to edge. The overshoot lands on the liner between
+labels, which has 5 mm of gutter — --bleed 0 prints exact size.
+
 No dependencies: images are embedded as JPEG (PDF's own DCTDecode), and anything
 that is not already a JPEG is converted and centre-cropped with sips, which ships
 with macOS.
@@ -191,8 +195,9 @@ def main():
                     help="e.g. 5=cover.jpg — repeat for each label")
     ap.add_argument("--calib", action="store_true",
                     help="also draw the label outlines and slot numbers")
-    ap.add_argument("--bleed", type=float, default=0.0, metavar="MM",
-                    help="print this far past each label's edge (default 0)")
+    ap.add_argument("--bleed", type=float, default=1.0, metavar="MM",
+                    help="print this far past each label's edge (default 1.0; "
+                         "the gutter allows up to 2.5, use 0 for exact size)")
     ap.add_argument("--left", type=float, default=None, metavar="MM",
                     help=f"left margin (default {MARGIN[0]})")
     ap.add_argument("--top", type=float, default=None, metavar="MM",
