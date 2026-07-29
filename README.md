@@ -472,6 +472,24 @@ cd software
 ./sync.sh pi@192.168.1.42       # or a different host
 ```
 
+### Printing the card labels
+
+The cards take 60 x 60 mm die-cut labels (etiketlageret A4-12, 12 per sheet).
+`tools/labels.py` writes a print-ready PDF, placing one image per label slot, so a
+part-used sheet can be finished off later. No dependencies — images are embedded
+as JPEG and converted/cropped with macOS's own `sips`.
+
+```
+cd tools
+./labels.py sheet.pdf 5=cover.jpg 6=other.png    # slots 1..12, L-R, top-bottom
+./labels.py grid.pdf --calib                     # outlines + numbers, plain paper
+```
+
+Print **at 100%** — any "fit to page" and the alignment is gone. Images are
+centre-cropped square; 470 px or more keeps it above 200 ppi. Check the grid
+against a real sheet once and nudge it with `--dx/--dy` if the die-cut positions
+differ from the assumed centred layout.
+
 ![Web simulator faceplate](docs/ui-preview.png)
 
 *The web simulator: warm 3D-printed-style enclosure, illuminated per-room arm buttons
