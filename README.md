@@ -486,7 +486,9 @@ cd tools
 ```
 
 Print **at 100%** — any "fit to page" and the alignment is gone. Images are
-centre-cropped square; 470 px or more keeps it above 200 ppi.
+centre-cropped square and overshoot each label by 1 mm so a slightly off die-cut
+still prints edge to edge (`--bleed 0` for exact size); 470 px or more keeps it
+above 200 ppi.
 
 The grid is taken from the vendor's own template (60 x 60 labels, 5 mm gutters,
 10 mm from the left, 20 mm from the top of an A4 page), verified by rendering
