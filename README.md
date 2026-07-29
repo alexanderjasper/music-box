@@ -486,9 +486,12 @@ cd tools
 ```
 
 Print **at 100%** — any "fit to page" and the alignment is gone. Images are
-centre-cropped square; 470 px or more keeps it above 200 ppi. Check the grid
-against a real sheet once and nudge it with `--dx/--dy` if the die-cut positions
-differ from the assumed centred layout.
+centre-cropped square; 470 px or more keeps it above 200 ppi.
+
+The grid is taken from the vendor's own template (60 x 60 labels, 5 mm gutters,
+10 mm from the left, 20 mm from the top of an A4 page), verified by rendering
+both that template and our output at 1 px/mm and comparing the die-cut lines. If
+your printer still shifts the page, `--dx/--dy` nudge everything.
 
 ![Web simulator faceplate](docs/ui-preview.png)
 
