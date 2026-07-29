@@ -1,8 +1,8 @@
 """The Music Box config app — what the box serves at musicbox.local.
 
-  /          the configuration app:
-               • map each hardware room-slot → a Sonos room
-               • map NFC tags → Sonos Favorites or playlists (live enrollment)
+  /          a start page linking to the two below
+  /config    map each hardware room-slot → a Sonos room, and NFC tags → Sonos
+             Favorites or playlists (live enrollment by holding a card on the box)
   /labels    lay album art onto a sheet of die-cut card labels, ready to print
 
 `create_app(box, ...)` is an app factory so the same routes serve both a laptop
@@ -56,6 +56,10 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
             return []
 
     @app.get("/")
+    def start_page():
+        return render_template("index.html", connected=connected,
+                               connect_error=connect_error or "")
+
     @app.get("/config")
     def config_page():
         return render_template("config.html")
@@ -196,7 +200,7 @@ app = _build_sim_app()  # module-level for gunicorn (web.server:app) and `python
 
 def main():
     port = int(os.environ.get("MUSICBOX_PORT", "8080"))
-    print(f"Open http://localhost:{port}/  (mapping)  ·  /labels  (card labels)")
+    print(f"Open http://localhost:{port}/   (setup · card labels)")
     app.run(host="0.0.0.0", port=port, debug=False)
 
 

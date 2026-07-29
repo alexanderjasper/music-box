@@ -71,7 +71,9 @@ def main():
         c = app.test_client()
 
         # pages render
-        check("/ renders (the setup page)", c.get("/").status_code == 200)
+        home = c.get("/")
+        check("/ renders the start page", home.status_code == 200
+              and b'href="/config"' in home.data and b'href="/labels"' in home.data)
         check("/config renders", c.get("/config").status_code == 200)
         check("/labels renders", c.get("/labels").status_code == 200)
 
