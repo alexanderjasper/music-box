@@ -32,9 +32,15 @@ import zlib
 
 MM = 72.0 / 25.4          # mm -> PDF points
 
-SHEET = (210.0, 295.3)    # the sheet is a little shorter than A4
-LABEL = (60.0, 60.0)
+# Measured off the vendor's own template (Skabelon_12-3.pdf) by rendering it at
+# 1 px/mm: labels 60 x 60 with 5 mm gutters, 10 mm from the left, 20 mm from the
+# top of an A4 page. The stock is a little shorter than A4, so the slack is at the
+# bottom — which is why the grid is anchored to the top-left, as printers are.
+SHEET  = (210.0, 297.0)
+LABEL  = (60.0, 60.0)
 COLS, ROWS = 3, 4
+MARGIN = (10.0, 20.0)     # left, top
+GUTTER = (5.0, 5.0)
 
 
 def sips(*args):
@@ -188,11 +194,11 @@ def main():
     ap.add_argument("--bleed", type=float, default=0.0, metavar="MM",
                     help="print this far past each label's edge (default 0)")
     ap.add_argument("--left", type=float, default=None, metavar="MM",
-                    help="left margin (default: centred)")
+                    help=f"left margin (default {MARGIN[0]})")
     ap.add_argument("--top", type=float, default=None, metavar="MM",
-                    help="top margin (default: centred)")
-    ap.add_argument("--gap", type=float, nargs=2, default=(0.0, 0.0),
-                    metavar=("X", "Y"), help="gutters between labels (default 0 0)")
+                    help=f"top margin (default {MARGIN[1]})")
+    ap.add_argument("--gap", type=float, nargs=2, default=GUTTER,
+                    metavar=("X", "Y"), help=f"gutters between labels (default {GUTTER[0]} {GUTTER[1]})")
     ap.add_argument("--dx", type=float, default=0.0, metavar="MM",
                     help="nudge everything right")
     ap.add_argument("--dy", type=float, default=0.0, metavar="MM",
@@ -202,10 +208,8 @@ def main():
     gx, gy = args.gap
     geom = {
         "gx": gx, "gy": gy, "dx": args.dx, "dy": args.dy,
-        "left": args.left if args.left is not None
-                else (SHEET[0] - COLS * LABEL[0] - (COLS - 1) * gx) / 2,
-        "top": args.top if args.top is not None
-               else (SHEET[1] - ROWS * LABEL[1] - (ROWS - 1) * gy) / 2,
+        "left": args.left if args.left is not None else MARGIN[0],
+        "top": args.top if args.top is not None else MARGIN[1],
     }
 
     images = []
