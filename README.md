@@ -446,7 +446,7 @@ cd software
 sudo apt install -y python3-gpiozero python3-lgpio
 pip install --break-system-packages -r requirements-pi.txt
 cp hardware.example.json hardware.json     # then edit to match your wiring
-python -m musicbox.service                 # then open http://musicbox.local:8080
+python -m musicbox.service                 # then open http://musicbox.local
 ```
 
 Then start it at boot, so the box works when you just plug it in:
@@ -476,7 +476,7 @@ cd software
 ### Printing the card labels
 
 The cards take 60 x 60 mm die-cut labels (etiketlageret A4-12, 12 per sheet). The
-box serves a page for it at **`musicbox.local:8080/labels`**: pick a Sonos
+box serves a page for it at **`musicbox.local/labels`**: pick a Sonos
 favourite per label and its cover art is fetched from the speakers, or drop in your
 own picture when a cover is too low-res. Press *Make the sheet* and it opens as a
 PDF to print. Only the labels you choose are filled, so a part-used sheet can be
