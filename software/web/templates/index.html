@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Box</title>
+<style>
+  :root {
+    --desk: #14120e; --muted: #7c7567; --accent: #f5712c;
+    --ok: #4a9d5b; --err: #e23b3b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; padding: 60px 16px;
+         background: radial-gradient(circle at 50% 14%, #201c16, var(--desk) 70%), var(--desk);
+         color: #e9e2d4; font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  .pill { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: #b9b1a1; }
+  h1 { font-size: 30px; margin: 6px 0 6px; color: #f3ecdd; letter-spacing: -.01em; }
+  .lead { color: var(--muted); margin: 0 0 34px; font-size: 14px; text-align: center;
+          max-width: 420px; }
+  .tiles { display: grid; gap: 14px; width: 420px; max-width: 100%; }
+  a.tile { display: block; text-decoration: none; color: inherit;
+           background: linear-gradient(168deg, #26221b, #1b1814);
+           border: 1px solid #34302a; border-radius: 16px; padding: 20px 22px;
+           box-shadow: 0 14px 34px rgba(0,0,0,.45); transition: border-color .15s, transform .15s; }
+  a.tile:hover { border-color: var(--accent); transform: translateY(-1px); }
+  a.tile h2 { margin: 0 0 4px; font-size: 17px; color: #f3ecdd; }
+  a.tile p { margin: 0; font-size: 13px; color: var(--muted); }
+  a.tile .go { float: right; color: var(--accent); font-size: 18px; margin-top: 2px; }
+  .status { margin-top: 30px; font-size: 12.5px; color: var(--muted); text-align: center; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+         background: var(--ok); margin-right: 6px; vertical-align: 1px; }
+  .dot.bad { background: var(--err); }
+</style>
+</head>
+<body>
+  <div class="pill">Music Box</div>
+  <h1>musicbox.local</h1>
+  <p class="lead">Place a card on the box and press play. This is where the cards
+  get their music and their covers.</p>
+
+  <div class="tiles">
+    <a class="tile" href="/config">
+      <span class="go">→</span>
+      <h2>Setup</h2>
+      <p>Which speaker each knob controls, and which album each card plays.
+         Hold a card on the box to bind it.</p>
+    </a>
+    <a class="tile" href="/labels">
+      <span class="go">→</span>
+      <h2>Card labels</h2>
+      <p>Print album covers onto sticker labels for new cards.</p>
+    </a>
+  </div>
+
+  <div class="status" id="status">
+    {% if connected %}
+      <span class="dot"></span>Connected to Sonos
+    {% else %}
+      <span class="dot bad"></span>Not connected to Sonos{% if connect_error %} — {{ connect_error }}{% endif %}
+    {% endif %}
+  </div>
+
+<script>
+fetch("/api/config").then(r => r.json()).then(cfg => {
+  const cards = Object.keys(cfg.cards || {}).length;
+  const rooms = Object.values(cfg.room_map || {}).filter(Boolean).length;
+  const bits = [`${cards} card${cards === 1 ? "" : "s"} bound`,
+                `${rooms} room${rooms === 1 ? "" : "s"} mapped`];
+  document.getElementById("status").insertAdjacentHTML(
+    "beforeend", `<br>${bits.join(" · ")}`);
+}).catch(() => {});
+</script>
+</body>
+</html>
