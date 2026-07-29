@@ -7,6 +7,7 @@ running server. Requires Flask (it's in requirements.txt / the dev venv).
 Run:  python tests/test_web.py
 """
 
+import io
 import os
 import sys
 import tempfile
@@ -22,8 +23,9 @@ sys.modules.setdefault("soco.exceptions", _exc)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from musicbox.core import MusicBox  # noqa: E402
+from musicbox.feedback import ConsoleBuzzer  # noqa: E402
 from musicbox.hardware.profile import _from_dict  # noqa: E402
-from web.server import WebBuzzer, create_app  # noqa: E402
+from web.server import create_app  # noqa: E402
 
 
 class FakeFavorite:
@@ -58,19 +60,20 @@ def main():
         rooms = os.path.join(d, "rooms.json")
 
         favs = [FakeFavorite("Bohemian Rhapsody"), FakeFavorite("Under Stjernerne")]
-        box = MusicBox(card_map={}, buzzer=WebBuzzer())
+        box = MusicBox(card_map={}, buzzer=ConsoleBuzzer())
         box.speakers = {n: FakeSpeaker(n, favs) for n in ("Alrum", "Køkken")}
         room_map = {}
         profile = _from_dict({"room_slots": [{"id": "1"}, {"id": "2"}]})
 
         app = create_app(box, profile=profile, room_map=room_map,
                          card_path=cards, room_path=rooms,
-                         nfc_last=lambda: "04DEADBE", web_buzzer=box.buzzer)
+                         nfc_last=lambda: "04DEADBE")
         c = app.test_client()
 
         # pages render
-        check("/ renders", c.get("/").status_code == 200)
+        check("/ renders (the setup page)", c.get("/").status_code == 200)
         check("/config renders", c.get("/config").status_code == 200)
+        check("/labels renders", c.get("/labels").status_code == 200)
 
         # config snapshot
         cfg = c.get("/api/config").get_json()
@@ -97,10 +100,21 @@ def main():
         r = c.post("/api/cards", json={"action": "delete", "id": "04AABB"}).get_json()
         check("card deletes", r["ok"] and "04AABB" not in r["cards"])
 
-        # action route still works + captures cues for the browser
-        r = c.post("/api/action", json={"action": "play"}).get_json()
-        check("play with no room is rejected", not r["ok"])
-        check("rejected play returns the error cue", r["cues"] == ["error"])
+        # label sheets: an uploaded picture lands on the sheet, nothing does not
+        img = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__)))), "docs", "ui-preview.png")
+        with open(img, "rb") as f:
+            r = c.post("/api/labels/pdf",
+                       data={"file5": (io.BytesIO(f.read()), "cover.png")},
+                       content_type="multipart/form-data")
+        check("label sheet builds a PDF", r.status_code == 200
+              and r.data.startswith(b"%PDF") and r.mimetype == "application/pdf")
+        empty = c.post("/api/labels/pdf", data={}, content_type="multipart/form-data")
+        check("empty sheet rejected (400)", empty.status_code == 400)
+        cal = c.post("/api/labels/pdf", data={"calib": "1"},
+                     content_type="multipart/form-data")
+        check("calibration sheet needs no images", cal.status_code == 200
+              and cal.data.startswith(b"%PDF"))
 
         # nfc last-seen endpoint
         check("/api/nfc/last returns uid", c.get("/api/nfc/last").get_json()["uid"] == "04DEADBE")

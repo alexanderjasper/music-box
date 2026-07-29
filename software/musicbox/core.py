@@ -297,6 +297,26 @@ class MusicBox:
         except Exception:
             return None  # unparseable metadata: treat as a stream, try play_uri
 
+    def artwork_for(self, query):
+        """Album-art bytes for the favorite or playlist matching query, or None.
+
+        Sonos serves the art itself, so this only works on the LAN — which is
+        where the label page runs.
+        """
+        import urllib.request
+
+        item = self._find_playable(query)
+        if item is None or not self.speakers:
+            return None
+        uri = (getattr(item, "album_art_uri", None)
+               or getattr(getattr(item, "reference", None), "album_art_uri", None))
+        if not uri:
+            return None
+        speaker = next(iter(self.speakers.values()))
+        full = speaker.music_library.build_album_art_full_uri(uri)
+        with urllib.request.urlopen(full, timeout=6) as r:
+            return r.read()
+
     def _find_playable(self, query):
         """Match a favorite or Sonos playlist by title substring.
 

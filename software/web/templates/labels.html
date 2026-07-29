@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Box — card labels</title>
+<style>
+  :root {
+    --desk: #14120e; --ink: #34302a; --muted: #7c7567;
+    --accent: #f5712c; --ok: #4a9d5b; --err: #e23b3b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; padding: 30px 16px 60px;
+         background: radial-gradient(circle at 50% 14%, #201c16, var(--desk) 70%), var(--desk);
+         color: #e9e2d4; font: 14.5px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  a { color: var(--accent); text-decoration: none; }
+  .pill { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #b9b1a1; }
+  h1 { font-size: 22px; margin: 4px 0 2px; color: #f3ecdd; }
+  .lead { color: var(--muted); margin: 0 0 22px; font-size: 13px; max-width: 620px; }
+  header { width: 620px; max-width: 100%; display: flex; justify-content: space-between;
+           align-items: flex-end; margin-bottom: 14px; }
+  .panel { width: 620px; max-width: 100%; background: linear-gradient(168deg, #26221b, #1b1814);
+           border: 1px solid #34302a; border-radius: 16px; padding: 22px 24px 26px;
+           margin-bottom: 20px; box-shadow: 0 18px 44px rgba(0,0,0,.5); }
+  .sheet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .slot { border: 1px dashed #4a443a; border-radius: 10px; padding: 8px; text-align: center;
+          background: #1d1a15; position: relative; }
+  .slot.filled { border-style: solid; border-color: var(--accent); }
+  .slot .n { position: absolute; top: 5px; left: 8px; font-size: 11px; color: var(--muted); }
+  .thumb { width: 100%; aspect-ratio: 1; border-radius: 6px; background: #14120e;
+           object-fit: cover; display: block; margin: 14px 0 8px; }
+  .thumb.empty { border: 1px solid #2c281f; }
+  select, button, input[type=file] { font: inherit; }
+  select { width: 100%; padding: 5px 6px; border-radius: 7px; background: #14120e;
+           color: #e9e2d4; border: 1px solid #3c362c; }
+  .file { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .file input { width: 100%; font-size: 11px; color: var(--muted); }
+  .warn { color: #e8b23b; font-size: 11px; margin-top: 4px; }
+  .actions { display: flex; gap: 10px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+  button { padding: 10px 18px; border-radius: 999px; border: 0; background: var(--accent);
+           color: #201c16; font-weight: 600; cursor: pointer; }
+  button.ghost { background: #2b2620; color: #e9e2d4; border: 1px solid #3c362c; font-weight: 500; }
+  #msg { font-size: 13px; min-height: 20px; margin-top: 12px; }
+  .steps { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; padding-left: 18px; }
+  .steps li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<header>
+  <div><div class="pill">Music Box</div><h1>Card labels</h1></div>
+  <div><a href="/">← setup</a></div>
+</header>
+
+<p class="lead">Put album covers on a sheet of 60&nbsp;×&nbsp;60&nbsp;mm sticker
+labels, one per card. Pick a favourite for each label and its cover is fetched
+from Sonos; add your own picture instead if a cover looks fuzzy.</p>
+
+<section class="panel">
+  <ol class="steps">
+    <li>Pick a favourite (or choose a picture) for each label you want to print.</li>
+    <li>Press <strong>Make the sheet</strong> — it opens as a PDF.</li>
+    <li>Print it at <strong>100% / actual size</strong>, no "fit to page".</li>
+  </ol>
+  <div class="sheet" id="sheet"></div>
+  <div class="actions">
+    <button id="make">Make the sheet</button>
+    <button class="ghost" id="calib">Test sheet on plain paper</button>
+    <button class="ghost" id="clear">Start over</button>
+  </div>
+  <div id="msg"></div>
+</section>
+
+<script>
+const SLOTS = 12, MIN_PX = 470;
+let titles = [];
+const chosen = {};        // slot -> {title} or {file: File}
+
+const esc = s => String(s).replace(/[&<>"]/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function render() {
+  const sheet = document.getElementById("sheet");
+  sheet.innerHTML = "";
+  for (let n = 1; n <= SLOTS; n++) {
+    const pick = chosen[n] || {};
+    const el = document.createElement("div");
+    el.className = "slot" + (pick.title || pick.file ? " filled" : "");
+    el.innerHTML = `
+      <span class="n">${n}</span>
+      <img class="thumb${pick.src ? "" : " empty"}" ${pick.src ? `src="${pick.src}"` : ""}>
+      <select data-slot="${n}">
+        <option value="">— empty —</option>
+        ${titles.map(t => `<option value="${esc(t)}"${pick.title === t ? " selected" : ""}>${esc(t)}</option>`).join("")}
+      </select>
+      <div class="file">or a picture<input type="file" accept="image/*" data-slot="${n}"></div>
+      ${pick.soft ? '<div class="warn">cover is small — it may print fuzzy</div>' : ""}`;
+    sheet.appendChild(el);
+  }
+  sheet.querySelectorAll("select").forEach(s => s.onchange = () => choose(+s.dataset.slot, s.value));
+  sheet.querySelectorAll("input[type=file]").forEach(f => f.onchange = () => {
+    const n = +f.dataset.slot, file = f.files[0];
+    if (!file) return;
+    chosen[n] = { file, src: URL.createObjectURL(file) };
+    render();
+  });
+}
+
+async function choose(n, title) {
+  if (!title) { delete chosen[n]; render(); return; }
+  chosen[n] = { title, src: "" };
+  render();
+  msg("Fetching the cover…");
+  try {
+    const r = await fetch("/api/labels/art?title=" + encodeURIComponent(title));
+    if (!r.ok) throw new Error((await r.json()).message || "no cover");
+    const px = +(r.headers.get("X-Source-Px") || 0);
+    const blob = await r.blob();
+    chosen[n] = { title, src: URL.createObjectURL(blob), soft: px && px < MIN_PX };
+    msg("");
+  } catch (e) {
+    chosen[n] = { title, src: "" };
+    msg("No cover on Sonos for that one — choose a picture instead.", true);
+  }
+  render();
+}
+
+function msg(text, bad) {
+  const m = document.getElementById("msg");
+  m.textContent = text || "";
+  m.style.color = bad ? "var(--err)" : "var(--muted)";
+}
+
+async function build(calib) {
+  const body = new FormData();
+  let any = false;
+  for (const [n, pick] of Object.entries(chosen)) {
+    if (pick.file) { body.append("file" + n, pick.file); any = true; }
+    else if (pick.title) { body.append("title" + n, pick.title); any = true; }
+  }
+  if (calib) body.append("calib", "1");
+  if (!any && !calib) return msg("Pick a favourite or a picture first.", true);
+  msg("Building the sheet…");
+  const r = await fetch("/api/labels/pdf", { method: "POST", body });
+  if (!r.ok) return msg((await r.json()).message || "Could not build it.", true);
+  const soft = (r.headers.get("X-Soft-Slots") || "").split(",").filter(Boolean);
+  window.open(URL.createObjectURL(await r.blob()), "_blank");
+  msg(soft.length
+      ? `Opened. Labels ${soft.join(", ")} came from small covers and may look fuzzy.`
+      : "Opened in a new tab — print at 100%, no scaling.");
+}
+
+document.getElementById("make").onclick = () => build(false);
+document.getElementById("calib").onclick = () => build(true);
+document.getElementById("clear").onclick = () => {
+  for (const k of Object.keys(chosen)) delete chosen[k];
+  render(); msg("");
+};
+
+fetch("/api/config").then(r => r.json()).then(cfg => {
+  titles = [...(cfg.favorites || []), ...(cfg.playlists || [])];
+  render();
+  if (!titles.length) msg("Not connected to Sonos — you can still use your own pictures.", true);
+});
+render();
+</script>
+</body>
+</html>

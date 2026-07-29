@@ -419,9 +419,10 @@ web simulator, and — now — the **real GPIO panel on the Pi**.
     web app over one shared box. `software/musicbox.service` is the systemd unit
     that runs it at boot.
 - **CLI simulator** — `python -m musicbox`, simulates the panel via typed commands.
-- **Web app** — `python -m web.server`: the faceplate at `/` **and the config app at
-  `/config`** — map room slots → Sonos rooms, bind NFC tags → **Sonos favorites or
-  Sonos playlists** (with live place-a-card enrollment). On the device this is served at `musicbox.local`.
+- **Web app** — `python -m web.server`: the config app at `/` — map room slots →
+  Sonos rooms, bind NFC tags → **Sonos favorites or Sonos playlists** (with live
+  place-a-card enrollment), and print card labels at `/labels`. On the device this
+  is served at `musicbox.local`.
 - **Config files** in `software/` (copy from each `*.example.json`): `hardware.json`
   (which controls exist + their pins — hand-edited as you wire), `rooms.json`
   (slot → Sonos room) and `cards.json` (tag UID → favorite). The last two are written
@@ -474,16 +475,24 @@ cd software
 
 ### Printing the card labels
 
-The cards take 60 x 60 mm die-cut labels (etiketlageret A4-12, 12 per sheet).
-`tools/labels.py` writes a print-ready PDF, placing one image per label slot, so a
-part-used sheet can be finished off later. No dependencies — images are embedded
-as JPEG and converted/cropped with macOS's own `sips`.
+The cards take 60 x 60 mm die-cut labels (etiketlageret A4-12, 12 per sheet). The
+box serves a page for it at **`musicbox.local:8080/labels`**: pick a Sonos
+favourite per label and its cover art is fetched from the speakers, or drop in your
+own picture when a cover is too low-res. Press *Make the sheet* and it opens as a
+PDF to print. Only the labels you choose are filled, so a part-used sheet can be
+finished off later.
+
+There is a command-line equivalent for the same job:
 
 ```
 cd tools
 ./labels.py sheet.pdf 5=cover.jpg 6=other.png    # slots 1..12, L-R, top-bottom
 ./labels.py grid.pdf --calib                     # outlines + numbers, plain paper
 ```
+
+Sheet geometry and PDF writing live in `software/web/labelsheet.py`, shared by
+both. Images are embedded as JPEG (no PDF library needed) and scaled with Pillow
+where it is installed, falling back to macOS's built-in `sips`.
 
 Print **at 100%** — any "fit to page" and the alignment is gone. Images are
 centre-cropped square and overshoot each label by 1 mm so a slightly off die-cut
