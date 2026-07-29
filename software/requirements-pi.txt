@@ -12,3 +12,5 @@ gpiozero>=2.0                       # buttons, rotary encoders, the buzzer
 lgpio>=0.2                          # gpiozero's pin backend on Raspberry Pi OS Bookworm
 adafruit-circuitpython-pn532>=2.4   # PN532 NFC reader over I²C
 adafruit-blinka>=8.0                # CircuitPython compatibility layer (board/busio)
+pillow>=10.0                        # scales album art for the label sheets
+                                    #   apt install python3-pil is fine too
