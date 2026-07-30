@@ -1,0 +1,21 @@
+software/musicbox/core.py
+  s_ea40d3bb0f9f68::t_94f0ed3a7b85a8 331,340,343,348,352,356,359,361-366
+software/web/server.py
+  s_ea40d3bb0f9f68::t_a22f8e4b56900f 127,129,131,133-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "8920d447b05f5c6200fe7142449aa6cbbfec62a4",
+  "prompts": {},
+  "sessions": {
+    "s_ea40d3bb0f9f68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0a09bc-8dec-4572-930c-1437de081fb8",
+        "model": "unknown"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
