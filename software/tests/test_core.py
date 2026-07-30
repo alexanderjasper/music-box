@@ -130,6 +130,22 @@ def make_box():
     return box
 
 
+def check_art_urls():
+    from musicbox.core import bigger_art_url
+    proxy = ("http://192.168.1.50:1400/getaa?s=1&u=https%3A%2F%2Fis1-ssl.mzstatic"
+             ".com%2Fimage%2Fthumb%2FMusic%2Fab%2F400x400bb.jpg")
+    check("art url upgraded to full size",
+          bigger_art_url(proxy) ==
+          "https://is1-ssl.mzstatic.com/image/thumb/Music/ab/1400x1400bb.jpg")
+    check("already-large art left alone",
+          bigger_art_url(proxy.replace("400x400", "1500x1500")) is None)
+    check("non-http sources left alone",
+          bigger_art_url("http://x:1400/getaa?s=1&u=x-sonos-http%3Aa.mp3") is None)
+    check("art url without a size left alone",
+          bigger_art_url("http://x:1400/getaa?s=1&u=https%3A%2F%2Fa.com%2Fcover.jpg")
+          is None)
+
+
 def check(label, cond):
     if not cond:
         raise AssertionError(f"FAILED: {label}")
@@ -259,6 +275,8 @@ def main():
     logT = boxT.speakers["Køkken"].log
     check("track used play_uri", any("play_uri" in e for e in logT))
     check("track did not touch the queue", not any("queue" in e for e in logT))
+
+    check_art_urls()
 
     print("\nAll core-logic checks passed.")
 

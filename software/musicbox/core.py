@@ -9,6 +9,10 @@ Every action returns a small result dict ({"ok": bool, "message": str}) and, as 
 side effect, fires the appropriate buzzer cue — exactly as the real box will.
 """
 
+import re
+import urllib.request
+from urllib.parse import parse_qs, unquote, urlparse
+
 import soco
 from soco.exceptions import SoCoException
 
@@ -33,6 +37,33 @@ _FOLD = str.maketrans({"ø": "o", "æ": "a", "å": "a", "ö": "o", "ä": "a", "�
 
 def _norm(s):
     return s.strip().lower().translate(_FOLD)
+
+
+_ART_SIZE_RE = re.compile(r"/(\d{2,4})x(\d{2,4})([a-z0-9\-]*)\.(jpe?g|png)", re.I)
+
+
+def bigger_art_url(proxy_url, want=1400):
+    """Rewrite a Sonos art-proxy URL into a full-size request on the service.
+
+    Sonos wraps the service's own artwork URL in `?u=...`. Apple Music (and
+    several others) put the pixel size in the path, so asking for a bigger one is
+    just string surgery. Returns None when there is nothing to rewrite.
+    """
+    inner = unquote(parse_qs(urlparse(proxy_url).query).get("u", [""])[0])
+    if not inner.startswith(("http://", "https://")):
+        return None
+    m = _ART_SIZE_RE.search(inner)
+    if not m or max(int(m.group(1)), int(m.group(2))) >= want:
+        return None
+    return _ART_SIZE_RE.sub(f"/{want}x{want}{m.group(3)}.{m.group(4)}", inner, count=1)
+
+
+def _fetch(url, timeout=8):
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return r.read()
+    except Exception:
+        return None
 
 
 class MusicBox:
@@ -300,11 +331,12 @@ class MusicBox:
     def artwork_for(self, query):
         """Album-art bytes for the favorite or playlist matching query, or None.
 
-        Sonos serves the art itself, so this only works on the LAN — which is
-        where the label page runs.
+        The player's own art proxy re-renders covers small (400 px on Apple
+        Music), which at 60 mm is only ~170 ppi. But the proxy URL carries the
+        streaming service's original URL in its `u=` parameter, and those often
+        have the size in the path — so try for a bigger one first and fall back
+        to what the player offers.
         """
-        import urllib.request
-
         item = self._find_playable(query)
         if item is None or not self.speakers:
             return None
@@ -313,9 +345,14 @@ class MusicBox:
         if not uri:
             return None
         speaker = next(iter(self.speakers.values()))
-        full = speaker.music_library.build_album_art_full_uri(uri)
-        with urllib.request.urlopen(full, timeout=6) as r:
-            return r.read()
+        proxied = speaker.music_library.build_album_art_full_uri(uri)
+
+        upstream = bigger_art_url(proxied)
+        if upstream:
+            data = _fetch(upstream)
+            if data:
+                return data
+        return _fetch(proxied)
 
     def _find_playable(self, query):
         """Match a favorite or Sonos playlist by title substring.

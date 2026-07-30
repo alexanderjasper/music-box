@@ -94,7 +94,7 @@ function render() {
         ${titles.map(t => `<option value="${esc(t)}"${pick.title === t ? " selected" : ""}>${esc(t)}</option>`).join("")}
       </select>
       <div class="file">or a picture<input type="file" accept="image/*" data-slot="${n}"></div>
-      ${pick.soft ? '<div class="warn">cover is small — it may print fuzzy</div>' : ""}`;
+      ${pick.soft ? `<div class="warn">${pick.px}px cover — may print soft</div>` : ""}`;
     sheet.appendChild(el);
   }
   sheet.querySelectorAll("select").forEach(s => s.onchange = () => choose(+s.dataset.slot, s.value));
@@ -116,7 +116,8 @@ async function choose(n, title) {
     if (!r.ok) throw new Error((await r.json()).message || "no cover");
     const px = +(r.headers.get("X-Source-Px") || 0);
     const blob = await r.blob();
-    chosen[n] = { title, src: URL.createObjectURL(blob), soft: px && px < MIN_PX };
+    chosen[n] = { title, src: URL.createObjectURL(blob), px,
+                  soft: px && px < MIN_PX };
     msg("");
   } catch (e) {
     chosen[n] = { title, src: "" };
