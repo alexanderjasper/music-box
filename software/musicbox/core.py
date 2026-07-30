@@ -328,7 +328,7 @@ class MusicBox:
         except Exception:
             return None  # unparseable metadata: treat as a stream, try play_uri
 
-    def artwork_for(self, query):
+    def artwork_for(self, query, trace=None):
         """Album-art bytes for the favorite or playlist matching query, or None.
 
         The player's own art proxy re-renders covers small (400 px on Apple
@@ -337,22 +337,33 @@ class MusicBox:
         have the size in the path — so try for a bigger one first and fall back
         to what the player offers.
         """
+        note = trace.append if trace is not None else (lambda _m: None)
         item = self._find_playable(query)
         if item is None or not self.speakers:
+            note("no matching favorite or playlist")
             return None
         uri = (getattr(item, "album_art_uri", None)
                or getattr(getattr(item, "reference", None), "album_art_uri", None))
         if not uri:
+            note("the item carries no album_art_uri")
             return None
         speaker = next(iter(self.speakers.values()))
         proxied = speaker.music_library.build_album_art_full_uri(uri)
+        note(f"player art url: {proxied}")
 
         upstream = bigger_art_url(proxied)
         if upstream:
+            note(f"trying full size: {upstream}")
             data = _fetch(upstream)
             if data:
+                note(f"got {len(data)} bytes from the service")
                 return data
-        return _fetch(proxied)
+            note("the service refused it; falling back to the player")
+        else:
+            note("nothing to rewrite in that url — the player's size is all there is")
+        data = _fetch(proxied)
+        note(f"player gave {len(data) if data else 0} bytes")
+        return data
 
     def _find_playable(self, query):
         """Match a favorite or Sonos playlist by title substring.

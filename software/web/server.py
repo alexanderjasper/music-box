@@ -124,15 +124,22 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
 
     @app.get("/api/labels/art")
     def label_art():
-        """Proxy the Sonos artwork for one favorite, so the page can show it."""
+        """The artwork for one favorite. ?debug=1 returns the trace, not the image."""
         title = request.args.get("title", "")
+        trace = []
         try:
-            data = box.artwork_for(title)
+            data = box.artwork_for(title, trace=trace)
         except Exception as e:
-            return jsonify({"ok": False, "message": str(e)}), 502
+            trace.append(f"failed: {e}")
+            data = None
+        side = labelsheet.source_size(data) if data else 0
+        trace.append(f"final size: {side}px")
+        for line in trace:                      # goes to journalctl -u musicbox
+            print(f"[art] {title!r}: {line}", flush=True)
+        if request.args.get("debug"):
+            return jsonify({"title": title, "px": side, "trace": trace})
         if not data:
             return jsonify({"ok": False, "message": "no artwork for that one"}), 404
-        side = labelsheet.source_size(data)
         return Response(data, mimetype="image/jpeg",
                         headers={"X-Source-Px": str(side)})
 
