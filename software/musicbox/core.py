@@ -42,20 +42,27 @@ def _norm(s):
 _ART_SIZE_RE = re.compile(r"/(\d{2,4})x(\d{2,4})([a-z0-9\-]*)\.(jpe?g|png)", re.I)
 
 
-def bigger_art_url(proxy_url, want=1400):
-    """Rewrite a Sonos art-proxy URL into a full-size request on the service.
+def bigger_art_urls(art_url, sizes=(1400, 1200, 800)):
+    """Full-size candidates for a cover URL, biggest first.
 
-    Sonos wraps the service's own artwork URL in `?u=...`. Apple Music (and
-    several others) put the pixel size in the path, so asking for a bigger one is
-    just string surgery. Returns None when there is nothing to rewrite.
+    Sonos gives the artwork either as its own proxy URL, with the service's URL in
+    a `u=` parameter, or as the service URL directly — both turn up in practice.
+    Apple Music puts the pixel size in the last path segment
+    (`.../400x400bb.jpeg`), so a bigger one is string surgery. Empty list when
+    there is no size to rewrite, and the ladder covers a service that refuses the
+    largest.
     """
-    inner = unquote(parse_qs(urlparse(proxy_url).query).get("u", [""])[0])
-    if not inner.startswith(("http://", "https://")):
-        return None
-    m = _ART_SIZE_RE.search(inner)
-    if not m or max(int(m.group(1)), int(m.group(2))) >= want:
-        return None
-    return _ART_SIZE_RE.sub(f"/{want}x{want}{m.group(3)}.{m.group(4)}", inner, count=1)
+    inner = unquote(parse_qs(urlparse(art_url).query).get("u", [""])[0])
+    target = inner if inner.startswith(("http://", "https://")) else art_url
+    if not target.startswith(("http://", "https://")):
+        return []
+    found = list(_ART_SIZE_RE.finditer(target))
+    if not found:
+        return []
+    m = found[-1]            # the size is the last segment, not the asset id
+    have = max(int(m.group(1)), int(m.group(2)))
+    return [f"{target[:m.start()]}/{w}x{w}{m.group(3)}.{m.group(4)}{target[m.end():]}"
+            for w in sizes if w > have]
 
 
 def _fetch(url, timeout=8):
@@ -349,18 +356,17 @@ class MusicBox:
             return None
         speaker = next(iter(self.speakers.values()))
         proxied = speaker.music_library.build_album_art_full_uri(uri)
-        note(f"player art url: {proxied}")
+        note(f"art url: {proxied}")
 
-        upstream = bigger_art_url(proxied)
-        if upstream:
-            note(f"trying full size: {upstream}")
-            data = _fetch(upstream)
+        for candidate in bigger_art_urls(proxied):
+            note(f"trying {candidate.rsplit('/', 1)[-1]}")
+            data = _fetch(candidate)
             if data:
                 note(f"got {len(data)} bytes from the service")
                 return data
-            note("the service refused it; falling back to the player")
+            note("refused")
         else:
-            note("nothing to rewrite in that url — the player's size is all there is")
+            note("no size to rewrite in that url — taking what the player offers")
         data = _fetch(proxied)
         note(f"player gave {len(data) if data else 0} bytes")
         return data
