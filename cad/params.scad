@@ -110,6 +110,12 @@ card_seat_clear = 0.4;    // around the rim, per side
 card_seat_h     = 2.2;    // groove depth
 card_rim_w      = 3.0;
 card_rim_h      = 2.0;
+// Both of the rim's bottom edges are chamfered. Stacked cards rest rim-on-label,
+// and a square 2 mm lip digs under the edge of the label on the card below as
+// soon as the stack slides; a ramp rides over it instead. The rim never bottoms
+// out in the groove (card_seat_h > card_rim_h), so the thinned tip carries no
+// load. The rim faces up on the bed, so the chamfer costs nothing to print.
+card_rim_ch     = 0.8;
 
 magnet_d      = 6.06;
 magnet_h      = 2.04;
