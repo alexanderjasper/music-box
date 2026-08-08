@@ -1,0 +1,23 @@
+cad/musicbox_single.scad
+  s_ea40d3bb0f9f68::t_8c8ce7fef0224c 13,16-17,36,53,114
+cad/params.scad
+  s_ea40d3bb0f9f68::t_4e721b85f689bb 207-231,260-271
+cad/storage.scad
+  s_ea40d3bb0f9f68::t_2972ff632af71c 1-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7abed2cfe90b2cfe4ea421153500d152c120234d",
+  "prompts": {},
+  "sessions": {
+    "s_ea40d3bb0f9f68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0a09bc-8dec-4572-930c-1437de081fb8",
+        "model": "unknown"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
