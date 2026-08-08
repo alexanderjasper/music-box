@@ -1,0 +1,21 @@
+cad/card.scad
+  s_ea40d3bb0f9f68::t_976ddaa7a174f7 11-32
+cad/params.scad
+  s_ea40d3bb0f9f68::t_047744145a643d 113-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "e1fe0d1556c4fa4b69ff7077045869a334a34300",
+  "prompts": {},
+  "sessions": {
+    "s_ea40d3bb0f9f68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0a09bc-8dec-4572-930c-1437de081fb8",
+        "model": "unknown"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
