@@ -18,6 +18,21 @@ module rbox_ch(w, d, h, r, ch, up = true) {
     }
 }
 
+// Thin rbox slices hulled in consecutive pairs, tracing an (inset, z) profile.
+// Hulling all of them at once instead would join the first slice to the last and
+// flatten the curve into a straight cone.
+module rbox_profile(w, d, r, prof) {
+    for (i = [0 : len(prof) - 2]) hull() for (j = [i, i + 1]) let (o = prof[j][0])
+        translate([o, o, prof[j][1]])
+            rbox(w - 2 * o, d - 2 * o, 0.01, max(0.5, r - o));
+}
+
+// Quarter-round: inset f at z = 0, easing tangentially into the wall at z = f.
+// sign = -1 turns it inside out, for the void a rim gets cut with.
+function fillet_prof(f, n = 8, sign = 1) =
+    [for (k = [0 : n]) let (a = 90 - 90 * k / n)
+        [sign * f * (1 - cos(a)), f * (1 - sin(a))]];
+
 // four corners plus two mid-edge posts, so a wide plate can't bow
 function post_pts() = concat([
     [post_inset,     post_inset],
