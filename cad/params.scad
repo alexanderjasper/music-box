@@ -204,6 +204,31 @@ tag_d        = 25.5;   // 25 mm sticker + fit
 tag_recess   = 0.4;    // 0.3 sticker + fit
 card_mag_gap = 0.9;    // plastic over the card's magnet
 
+/* -------------------------------------------------- card storage box ----- */
+// A trough the cards stand on edge in, one card wide, as long as the printer
+// will take. The ends slope outward so the stack can fan back and you can thumb
+// through it in place; the notch in each side is where you pinch a card out.
+//
+// The widest point is the top, so the footprint is smaller than box_len — the bed
+// only has to swallow box_len at the rim, and the slope is well inside the 45
+// degrees an overhang can manage, printed opening-up with no supports.
+
+box_bed      = [250, 220];   // Prusa Core One
+box_margin   = 3;            // to the bed edge, at the widest point
+box_len      = box_bed[0] - 2 * box_margin;
+box_slope    = 20;           // end walls, from vertical
+box_h        = 44;           // cards stand 70 tall, so ~26 mm stays in the hand
+box_wall     = 2.4;
+box_floor    = 2.4;
+box_fit      = 1.2;          // around the card, per side
+box_ch       = 0.8;
+box_r        = 5;            // plan corners
+box_notch_w  = 70;
+box_notch_d  = 16;
+
+box_w      = card_size[1] + 2 * (box_fit + box_wall);
+card_pitch = card_t + card_rim_h;   // cards nest rim-to-face
+
 /* -------------------------------------------------------------- layout --- */
 // From the box's front-left corner.
 
@@ -231,6 +256,18 @@ magnet_bore = plate_t - magnet_cover;
 if (magnet_bore < magnet_h)
     echo(str("WARNING: magnet bore is only ", magnet_bore, " mm for a ",
              magnet_h, " mm magnet"));
+
+// the storage box: it is sized right up to the bed, so say what it comes to
+box_foot = box_len - 2 * box_h * tan(box_slope);
+box_hold = floor((box_len - 2 * box_h * tan(box_slope)
+                  - 2 * box_wall / cos(box_slope)) / card_pitch);
+echo(str("storage box: ", box_len, " x ", box_w, " x ", box_h,
+         " mm, footprint ", box_foot, " x ", box_w,
+         ", holds about ", box_hold, " cards upright"));
+if (box_len > box_bed[0] || box_w > box_bed[1])
+    echo("WARNING: the storage box is longer than the bed");
+if (box_notch_w / 2 > box_foot / 2 - box_wall)
+    echo("WARNING: the finger notch is wider than the floor it sits over");
 
 /* ---------------------------------------------------------------- jigs --- */
 // Drop-in tray for sticking labels on cards squarely: the sticker goes in the
