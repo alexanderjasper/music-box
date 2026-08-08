@@ -10,9 +10,11 @@
 //   util.scad        rounded boxes and the hole-position tables
 //   icons.scad       the engraved panel glyphs
 //   shell.scad       faceplate.scad  card.scad  knob.scad  jigs.scad
+//   storage.scad     the box the cards live in when they are not on the plate
 //
 // Print: 0.2 mm layers, 3 perimeters, PLA/PETG, no supports, one part at a time.
-// Shell floor-down, tray pockets-up. Faceplate, card and knob print TOP FACE
+// Shell floor-down, tray pockets-up, storage box opening-up (its ends lean out
+// 20 degrees, so they carry themselves). Faceplate, card and knob print TOP FACE
 // DOWN and come out of the part switch already flipped for the bed. Nothing
 // metal-filled: the PN532 reads through the plate. A filament change at 0.6 mm
 // colours only the engraved icons.
@@ -31,7 +33,7 @@
 //   OpenSCAD -o knob.stl -D 'part="knob"' musicbox_single.scad
 // Deliberately NOT annotated for the Customizer: with that panel open, it takes
 // ownership of these values and quietly renders its own instead of the file's.
-part = "card";  // assembly | shell | faceplate | card | knob | testfit | tray
+part = "card";  // assembly | shell | faceplate | card | knob | testfit | tray | box
 
 explode   = 0;       // assembly view: lift the stack apart, mm
 section   = false;   // cut away everything right of section_x
@@ -48,6 +50,7 @@ include <faceplate.scad>
 include <card.scad>
 include <knob.scad>
 include <jigs.scad>
+include <storage.scad>
 
 /* ============================================================= preview === */
 
@@ -108,6 +111,7 @@ module output() {
     else if (part == "testfit")
         translate([0, 50, plate_t]) rotate([180, 0, 0]) testfit();
     else if (part == "tray") label_tray();
+    else if (part == "box") card_box();
     else echo("unknown part");
 }
 
