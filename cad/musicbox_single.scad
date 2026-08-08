@@ -31,7 +31,7 @@
 //   OpenSCAD -o knob.stl -D 'part="knob"' musicbox_single.scad
 // Deliberately NOT annotated for the Customizer: with that panel open, it takes
 // ownership of these values and quietly renders its own instead of the file's.
-part = "assembly";  // assembly | shell | faceplate | card | knob | testfit | tray
+part = "card";  // assembly | shell | faceplate | card | knob | testfit | tray
 
 explode   = 0;       // assembly view: lift the stack apart, mm
 section   = false;   // cut away everything right of section_x
