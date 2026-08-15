@@ -233,6 +233,11 @@ box_h        = 44;           // cards stand 70 tall, so ~26 mm stays in the hand
 box_wall     = 4 * extrusion_w;
 box_floor    = 2.4;
 box_fit      = 1.2;          // around the card, per side
+// Fillet where the walls meet the floor: no stress riser along the long walls,
+// and nowhere for grit to pack. It eats into the floor, but the card's own 8 mm
+// plan corners mean the card first touches the floor 9.2 mm in from the wall, by
+// which point the fillet is long finished — so it costs no width.
+box_ifil     = 1.5;
 box_ch       = chamfer;      // the enclosure's edge language, not its own
 box_r        = corner_r;
 
