@@ -222,15 +222,26 @@ card_mag_gap = 0.9;    // plastic over the card's magnet
 // can manage, so the box prints opening-up with no supports.
 
 box_bed      = [250, 220];   // Prusa Core One
-box_margin   = 3;            // to the bed edge, at the widest point
+box_margin   = 8;            // to the bed edge — a 244 mm box leaves no room for
+                             // a brim, and its 200 mm bottom edge wants one
 box_len      = box_bed[0] - 2 * box_margin;
 box_slope    = 20;           // end walls, from vertical
 box_h        = 44;           // cards stand 70 tall, so ~26 mm stays in the hand
-box_wall     = 2.4;
+box_wall     = 6 * extrusion_w;   // whole extrusions, as for the card's rim
 box_floor    = 2.4;
 box_fit      = 1.2;          // around the card, per side
-box_ch       = 0.8;
-box_r        = 5;            // plan corners
+box_ch       = chamfer;      // the enclosure's edge language, not its own
+box_r        = corner_r;
+
+// Vertical flutes down the long sides: they break up 200 mm of flat wall, hide
+// the layer lines, and cost nothing to print standing up. Shallow on purpose —
+// the wall is only six extrusions thick to begin with.
+box_flute_r     = 1.5;         // of the cutting capsule
+box_flute_d     = extrusion_w; // exactly one wall deep, so five whole extrusions
+                               // are left behind it and no gap fill comes back
+box_flute_pitch = 9;     // nominal; the real one divides the run evenly
+box_flute_end   = 10;    // clear of the corners
+box_flute_z     = 5;     // and clear of both chamfers
 
 box_w      = card_size[1] + 2 * (box_fit + box_wall);
 card_pitch = card_t + card_rim_h;   // cards nest rim-to-face
