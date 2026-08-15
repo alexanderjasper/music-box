@@ -233,16 +233,6 @@ box_fit      = 1.2;          // around the card, per side
 box_ch       = chamfer;      // the enclosure's edge language, not its own
 box_r        = corner_r;
 
-// Vertical flutes down the long sides: they break up 200 mm of flat wall, hide
-// the layer lines, and cost nothing to print standing up. Shallow on purpose —
-// the wall is only six extrusions thick to begin with.
-box_flute_r     = 1.5;         // of the cutting capsule
-box_flute_d     = extrusion_w; // exactly one wall deep, so five whole extrusions
-                               // are left behind it and no gap fill comes back
-box_flute_pitch = 9;     // nominal; the real one divides the run evenly
-box_flute_end   = 10;    // clear of the corners
-box_flute_z     = 5;     // and clear of both chamfers
-
 box_w      = card_size[1] + 2 * (box_fit + box_wall);
 card_pitch = card_t + card_rim_h;   // cards nest rim-to-face
 
