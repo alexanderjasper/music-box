@@ -13,8 +13,9 @@
 //   storage.scad     the box the cards live in when they are not on the plate
 //
 // Print: 0.2 mm layers, 3 perimeters, PLA/PETG, no supports, one part at a time.
-// Shell floor-down, tray pockets-up, storage box opening-up (its ends lean out
-// 20 degrees, so they carry themselves). Faceplate, card and knob print TOP FACE
+// Shell floor-down, tray pockets-up, storage box opening-up (the trough's ends
+// lean out 20 degrees, so they carry themselves). Faceplate, card and knob print
+// TOP FACE
 // DOWN and come out of the part switch already flipped for the bed. Nothing
 // metal-filled: the PN532 reads through the plate. A filament change at 0.6 mm
 // colours only the engraved icons.
