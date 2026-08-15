@@ -108,7 +108,14 @@ if (knob_valley_r - knob_nut_d / 2 < 1.2)
 // the groove — the card is the cheap part to reprint.
 card_seat_clear = 0.4;    // around the rim, per side
 card_seat_h     = 2.2;    // groove depth
-card_rim_w      = 3.0;
+// A whole number of extrusions wide, so the slicer fills the rim with walls and
+// nothing else. At 3.0 it came to six walls plus a 0.3 mm ribbon of gap fill,
+// laid down right behind the outer wall on every layer of the rim — that is what
+// dents the card's edge at the height where the solid part ends and only the rim
+// carries on. Set extrusion_w to the slicer's own value and reslice.
+extrusion_w     = 0.45;   // 0.4 nozzle, PrusaSlicer's default width
+card_rim_walls  = 6;
+card_rim_w      = card_rim_walls * extrusion_w;
 card_rim_h      = 2.0;
 // Both of the rim's bottom edges are rounded over. Stacked cards rest
 // rim-on-label, and a square 2 mm lip digs under the edge of the label on the
