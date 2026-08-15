@@ -1,0 +1,21 @@
+cad/params.scad
+  s_ea40d3bb0f9f68::t_5c670a831c9209 225-226,230,233-244
+cad/storage.scad
+  s_ea40d3bb0f9f68::t_df88c13fd1e938 9-14,22-28,30-35,38-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c323e06d10ab95b23a83d9fcf9387c7d7077e27c",
+  "prompts": {},
+  "sessions": {
+    "s_ea40d3bb0f9f68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0a09bc-8dec-4572-930c-1437de081fb8",
+        "model": "unknown"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
