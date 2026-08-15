@@ -227,7 +227,10 @@ box_margin   = 8;            // to the bed edge — a 244 mm box leaves no room 
 box_len      = box_bed[0] - 2 * box_margin;
 box_slope    = 20;           // end walls, from vertical
 box_h        = 44;           // cards stand 70 tall, so ~26 mm stays in the hand
-box_wall     = 6 * extrusion_w;   // whole extrusions, as for the card's rim
+// Whole extrusions, as for the card's rim. Four is a fifth of the filament off
+// six and costs no stiffness that matters: the cards' weight goes into the floor,
+// and a trough is a channel section — the floor and the ends carry it.
+box_wall     = 4 * extrusion_w;
 box_floor    = 2.4;
 box_fit      = 1.2;          // around the card, per side
 box_ch       = chamfer;      // the enclosure's edge language, not its own
