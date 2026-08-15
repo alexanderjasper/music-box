@@ -15,10 +15,9 @@
 // Print: 0.2 mm layers, 3 perimeters, PLA/PETG, no supports, one part at a time.
 // Shell floor-down, tray pockets-up, storage box opening-up (the trough's ends
 // lean out 20 degrees, so they carry themselves). Faceplate, card and knob print
-// TOP FACE
-// DOWN and come out of the part switch already flipped for the bed. Nothing
-// metal-filled: the PN532 reads through the plate. A filament change at 0.6 mm
-// colours only the engraved icons.
+// TOP FACE DOWN and come out of the part switch already flipped for the bed.
+// Nothing metal-filled: the PN532 reads through the plate. A filament change at
+// 0.6 mm colours only the engraved icons.
 //
 // Assembly: brass inserts into the shell posts. Magnet up the plate's blind bore
 // until it stops, then glue (every card's magnet faces the opposite pole).
