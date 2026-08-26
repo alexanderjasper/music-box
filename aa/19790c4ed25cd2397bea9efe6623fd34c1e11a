@@ -1,0 +1,25 @@
+cad/card.scad
+  s_ea40d3bb0f9f68::t_30f8404b09be12 1-2
+cad/jigs.scad
+  s_ea40d3bb0f9f68::t_b80bf6eb55f6ce 6
+cad/musicbox_single.scad
+  s_ea40d3bb0f9f68::t_6d5856dd095fc4 3-6,22-26
+cad/params.scad
+  s_ea40d3bb0f9f68::t_4532fbe18e2d14 6-8,103-105,198-202,205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "aa19790c4ed25cd2397bea9efe6623fd34c1e11a",
+  "prompts": {},
+  "sessions": {
+    "s_ea40d3bb0f9f68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4b0a09bc-8dec-4572-930c-1437de081fb8",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Alexander Skjold Jasper <alexander.jasper@visma.com>"
+    }
+  }
+}
