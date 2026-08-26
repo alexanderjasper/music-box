@@ -3,9 +3,9 @@
 
 /* ---------------------------------------------------------------- box ---- */
 // Width and depth are set by the 830-point breadboard (165 x 55) with the Pi
-// behind it. The plate is as thin as the magnet bore and the card groove allow,
-// which also leaves the controls' bushings enough thread and their nuts in the
-// open — no pockets needed anywhere.
+// behind it. The plate is as thin as the card groove allows, which also leaves
+// the controls' bushings enough thread and their nuts in the open — no pockets
+// needed anywhere.
 
 W          = 185;
 D          = 118;
@@ -100,9 +100,9 @@ if (knob_valley_r - knob_nut_d / 2 < 1.2)
 /* --------------------------------------------------------- card / NFC ---- */
 // The card's rim drops into a groove in the plate: it keeps a written title
 // square, marks the spot when empty, and bridges in ~4 mm so the plate can print
-// face down. The magnet holds the card down. The plate is NOT thinned here — PLA
-// is transparent at 13.56 MHz, so only distance matters, and the tag ends up
-// plate_t + pn532_standoff = 9 mm from the coil, well inside a PN532's range.
+// face down. The plate is NOT thinned here — PLA is transparent at 13.56 MHz, so
+// only distance matters, and the tag ends up plate_t + pn532_standoff = 9 mm from
+// the coil, well inside a PN532's range.
 
 // If the rim ends up tight in the groove, shrink card_size rather than opening up
 // the groove — the card is the cheap part to reprint.
@@ -126,11 +126,6 @@ card_rim_h      = 2.0;
 // rim never bottoms out in the groove (card_seat_h > card_rim_h), so the thinned
 // tip carries no load, and the rim faces up on the bed, so this is free to print.
 card_rim_r      = 0.8;
-
-magnet_d      = 6.06;
-magnet_h      = 2.04;
-magnet_fit    = 0.25;
-magnet_cover  = 1.2;      // plastic between magnet and top face
 
 // Two mounting holes on a diagonal 38 mm apart, symmetric about the card spot so
 // the antenna stays centred. If the diagonal isn't 45 deg, measure dx/dy between
@@ -200,16 +195,18 @@ port_slot_x   = pi_pos[0] + 1;
 port_slot_z   = floor_t + pi_standoff_h - 1.0;
 
 /* --------------------------------------------------------------- cards --- */
-// NTAG215 sticker in a recess on the underside, magnet buried below it, flat top
-// face to write on. Both pockets load from the same side.
+// NTAG215 sticker in a recess on the underside, flat top face for the label.
+// There is no magnet: it held the card to the plate, but it also fought you every
+// time you flipped through the box. Without it the only thing setting the
+// thickness is the tag recess plus enough plate under it to feel solid, and the
+// rim doubles as a stiffening flange right round the edge.
 
 card_size    = [70, 70];
-card_t       = 3.6;
+card_t       = 2.4;
 card_r       = 8;
 card_ch      = 0.8;
 tag_d        = 25.5;   // 25 mm sticker + fit
 tag_recess   = 0.4;    // 0.3 sticker + fit
-card_mag_gap = 0.9;    // plastic over the card's magnet
 
 /* -------------------------------------------------- card storage box ----- */
 // A trough the cards stand on edge in, one card wide, as long as the printer
@@ -266,11 +263,6 @@ if (btn_clear < 5)
     echo(str("WARNING: only ", btn_clear,
              " mm between the switch backs and the breadboard — raise H by ",
              ceil(5 - btn_clear)));
-
-magnet_bore = plate_t - magnet_cover;
-if (magnet_bore < magnet_h)
-    echo(str("WARNING: magnet bore is only ", magnet_bore, " mm for a ",
-             magnet_h, " mm magnet"));
 
 // the storage box: it is sized right up to the bed, so say what it comes to
 box_hold = floor((box_len - 2 * box_wall

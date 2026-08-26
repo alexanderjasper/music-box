@@ -3,7 +3,7 @@ include <params.scad>
 include <util.scad>
 include <icons.scad>
 
-// gauge the real ones. Stations: switch, encoder, magnet, insert boss, icon.
+// gauge the real ones. Stations: switch, encoder, insert boss, icon.
 
 module testfit() {
     tf = [82, 32];
@@ -16,9 +16,6 @@ module testfit() {
         btn_hole([13, y]);
 
         translate([33, y, -1]) cylinder(d = enc_hole_d, h = plate_t + 2);
-
-        translate([55, y, -0.01])
-            cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
 
         // insert bore, in a boss of the same wall as the shell's posts
         translate([74, y, -6.01]) cylinder(d = insert_hole_d, h = insert_depth);
