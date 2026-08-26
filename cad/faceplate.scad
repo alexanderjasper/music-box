@@ -64,9 +64,6 @@ module faceplate() {
 
         card_groove();
 
-        translate([card_pos[0], card_pos[1], -0.01])
-            cylinder(d = magnet_d + magnet_fit, h = magnet_bore + 0.01);
-
         for (p = pn532_hole_pts())
             translate([p[0], p[1], -pn532_standoff - 0.01])
                 cylinder(d = pn532_hole_d, h = pn532_standoff + pn532_hole_deep);

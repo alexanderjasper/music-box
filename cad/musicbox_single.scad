@@ -1,9 +1,9 @@
 // Music Box — single-speaker enclosure
 // ====================================
-// Parts: shell (body, Pi + breadboard mounts), faceplate (controls, PN532, card
-// magnet), card (NTAG215 + magnet), knob, plus two printing aids — the fit-test
-// coupon and the label tray. Controls per hardware/BOM.md: room toggle (DSQ14
-// latching), 3 momentary transport buttons, KY-040 encoder, KY-006 buzzer.
+// Parts: shell (body, Pi + breadboard mounts), faceplate (controls, PN532), card
+// (NTAG215), knob, plus two printing aids — the fit-test coupon and the label
+// tray. Controls per hardware/BOM.md: room toggle (DSQ14 latching), 3 momentary
+// transport buttons, KY-040 encoder, KY-006 buzzer.
 //
 // This is the only file to open or render. The model is split across:
 //   params.scad      every dimension, the derived values and the sanity checks
@@ -19,12 +19,11 @@
 // Nothing metal-filled: the PN532 reads through the plate. A filament change at
 // 0.6 mm colours only the engraved icons.
 //
-// Assembly: brass inserts into the shell posts. Magnet up the plate's blind bore
-// until it stops, then glue (every card's magnet faces the opposite pole).
-// Switches in from the top, nuts from inside; encoder from below, nut on top;
-// PN532 on its two posts with M3x8; buzzer taped into its pocket; Pi onto the
-// floor pegs. Wire per hardware/WIRING.md with ~10 cm slack so the plate lifts
-// off with its controls. 6x M3x12 from the top.
+// Assembly: brass inserts into the shell posts. Switches in from the top, nuts
+// from inside; encoder from below, nut on top; PN532 on its two posts with M3x8;
+// buzzer taped into its pocket; Pi onto the floor pegs. Wire per
+// hardware/WIRING.md with ~10 cm slack so the plate lifts off with its controls.
+// 6x M3x12 from the top.
 //
 // Dimensions marked (verify) come from listings, not from parts in hand — print
 // part = "testfit" first and check them.

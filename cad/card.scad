@@ -1,5 +1,5 @@
-// The printed NFC card: tag recess, buried magnet, and the rim that drops into
-// the faceplate's groove.
+// The printed NFC card: tag recess and the rim that drops into the faceplate's
+// groove.
 include <params.scad>
 include <util.scad>
 
@@ -30,7 +30,5 @@ module card() {
         }
         translate([card_size[0] / 2, card_size[1] / 2, -0.5])
             cylinder(d = tag_d, h = tag_recess + 0.5);
-        translate([card_size[0] / 2, card_size[1] / 2, tag_recess])
-            cylinder(d = magnet_d + magnet_fit, h = card_t - tag_recess - card_mag_gap);
     }
 }
