@@ -17,11 +17,23 @@ Control semantics follow the agreed design:
 
 The slot→room map is a live dict shared with the web config app: when you remap
 a slot in the browser, the panel picks it up on the next button press.
+
+The box runs for days unattended, so every handler is fenced: whatever goes wrong
+in one press is logged and buzzed as an error, and never takes down the thread
+that delivered it — a dead NFC thread is a box that ignores every card until
+it's unplugged.
 """
 
 import threading
+import time
+import traceback
 
 VOLUME_STEP = 2  # volume change per encoder detent
+
+NFC_REMOVE_AFTER = 3      # empty reads in a row before a card counts as lifted
+NFC_RESET_AFTER = 5       # failed reads in a row before the reader is re-initialised
+NFC_CHECK_EVERY = 30.0    # s between asking an idle reader whether it still answers
+NFC_REINIT_EVERY = 600.0  # s between precautionary re-inits while the spot is empty
 
 
 def _err(message):
@@ -92,7 +104,11 @@ class Panel:
         self._present_uid = None        # UID currently on the spot (for removal detection)
         self._controls = []             # keep gpiozero refs alive (else GC unbinds them)
         self._nfc_thread = None
+        self.nfc_heartbeat = None       # monotonic time of the NFC loop's last round
         self._stop = threading.Event()
+        # gpiozero callbacks, the NFC thread and the volume worker all drive the
+        # box; one at a time, so a press can't interleave with a half-started card
+        self._lock = threading.RLock()
         # coalesces fast encoder turns into few Sonos calls; built in bind()
         self._volume = None
 
@@ -152,7 +168,16 @@ class Panel:
         return self._do(self.box.remove_card)
 
     def _do(self, fn, *args):
-        result = fn(*args)
+        with self._lock:
+            try:
+                result = fn(*args)
+            except Exception as e:
+                traceback.print_exc()
+                try:
+                    self.box.buzzer.error()
+                except Exception:
+                    pass
+                result = _err(f"{getattr(fn, '__name__', 'action')} failed: {e}")
         if self.on_change:
             try:
                 self.on_change(result)
@@ -209,31 +234,85 @@ class Panel:
     # --- NFC polling --------------------------------------------------------
 
     def start_nfc(self):
+        self.nfc_heartbeat = time.monotonic()
         self._nfc_thread = threading.Thread(target=self._nfc_loop, daemon=True)
         self._nfc_thread.start()
+
+    def alive(self, stale_after=90.0):
+        """False once the NFC loop has stopped going round — dead or stuck.
+
+        The service stops patting systemd's watchdog when this goes False, and
+        systemd restarts it: the software version of pulling the plug.
+        """
+        if self._nfc_thread is None:
+            return True
+        return (self._nfc_thread.is_alive()
+                and time.monotonic() - self.nfc_heartbeat < stale_after)
 
     def _nfc_loop(self):
         # A tag present reads its UID on each poll; empty reads None. Require a
         # few consecutive empties before declaring "removed" so one missed read
-        # (common with cheap readers) doesn't falsely stop playback.
+        # (common with cheap readers) doesn't falsely stop playback. A read that
+        # *fails* is not an empty spot, so errors never count as a removal.
+        #
+        # The PN532 can wedge after days on I²C. Sometimes reads start failing,
+        # which is easy to see; sometimes it just stops seeing tags, which looks
+        # exactly like an empty spot. So an idle reader is asked for its firmware
+        # now and then, and re-initialised on a failure — or every so often
+        # regardless, which is what the restart that used to fix it did.
         interval = self.profile.nfc_poll_interval
-        remove_after = 3
-        misses = 0
+        misses = errors = 0
+        last_check = last_init = time.monotonic()
         while not self._stop.is_set():
+            self.nfc_heartbeat = now = time.monotonic()
             try:
                 uid = self.nfc.read_uid()
-            except Exception:
-                uid = None
-            if uid:
-                misses = 0
-                if uid != self._present_uid:
-                    self.on_tag(uid)
-            elif self._present_uid is not None:
-                misses += 1
-                if misses >= remove_after:
+            except Exception as e:
+                errors += 1
+                if errors == 1:
+                    print(f"  nfc: read failed ({e!r})", flush=True)
+                if errors >= NFC_RESET_AFTER:
+                    self._reset_nfc(f"{errors} failed reads in a row")
+                    errors = 0
+                    last_check = last_init = time.monotonic()
+                self._stop.wait(interval)
+                continue
+            errors = 0
+            try:
+                if uid:
                     misses = 0
-                    self.on_tag_removed()
+                    if uid != self._present_uid:
+                        self.on_tag(uid)
+                elif self._present_uid is not None:
+                    misses += 1
+                    if misses >= NFC_REMOVE_AFTER:
+                        misses = 0
+                        self.on_tag_removed()
+                elif now - last_init >= NFC_REINIT_EVERY:
+                    self._reset_nfc()
+                    last_check = last_init = time.monotonic()
+                elif now - last_check >= NFC_CHECK_EVERY:
+                    last_check = now
+                    if not self._nfc_answers():
+                        self._reset_nfc("the reader stopped answering")
+                        last_init = time.monotonic()
+            except Exception:
+                traceback.print_exc()  # never let one bad round end the loop
             self._stop.wait(interval)
+
+    def _nfc_answers(self):
+        try:
+            return self.nfc.healthy()
+        except Exception:
+            return False
+
+    def _reset_nfc(self, why=None):
+        if why:
+            print(f"  nfc: re-initialising the reader — {why}", flush=True)
+        try:
+            self.nfc.reset()
+        except Exception as e:
+            print(f"  nfc: re-initialising failed ({e!r})", flush=True)
 
     def stop(self):
         self._stop.set()

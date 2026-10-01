@@ -44,6 +44,20 @@
   #msg { font-size: 13px; min-height: 20px; margin-top: 12px; }
   .steps { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; padding-left: 18px; }
   .steps li { margin-bottom: 3px; }
+  .kind { display: flex; justify-content: flex-end; margin: -2px 0 0; }
+  .kind button { padding: 2px 9px; font-size: 11px; font-weight: 500; border-radius: 0;
+                 background: #14120e; color: var(--muted); border: 1px solid #3c362c; }
+  .kind button:first-child { border-radius: 999px 0 0 999px; }
+  .kind button:last-child { border-radius: 0 999px 999px 0; border-left: 0; }
+  .kind button.on { background: #3a2f24; color: #f3ecdd; }
+  .back { display: flex; flex-direction: column; gap: 5px; margin: 10px 0 6px; text-align: left; }
+  .back input, .back textarea { width: 100%; font: inherit; font-size: 12px; padding: 4px 6px;
+                                border-radius: 6px; background: #f6f2ea; color: #1b1814;
+                                border: 1px solid #3c362c; }
+  .back input.album { font-weight: 700; }
+  .back textarea { resize: vertical; min-height: 92px; font-size: 11px; line-height: 1.35; }
+  .src { font-size: 11px; color: var(--muted); }
+  .src.check { color: #e8b23b; }
 </style>
 </head>
 <body>
@@ -54,17 +68,21 @@
 
 <p class="lead">Put album covers on a sheet of 60&nbsp;×&nbsp;60&nbsp;mm sticker
 labels, one per card. Pick a favourite for each label and its cover is fetched
-from Sonos; add your own picture instead if a cover looks fuzzy.</p>
+from Sonos; add your own picture instead if a cover looks fuzzy. Switch a label
+to <strong>Back</strong> for the recess on the back of the card: artist, album
+and tracks, which you can correct before printing.</p>
 
 <section class="panel">
   <ol class="steps">
-    <li>Pick a favourite (or choose a picture) for each label you want to print.</li>
+    <li>Pick a favourite (or choose a picture) for each label you want to print.
+        <strong>Add the backs</strong> gives every front a back label in a free spot.</li>
     <li>Press <strong>Make the sheet</strong> — it opens as a PDF.</li>
     <li>Print it at <strong>100% / actual size</strong>, no "fit to page".</li>
   </ol>
   <div class="sheet" id="sheet"></div>
   <div class="actions">
     <button id="make">Make the sheet</button>
+    <button class="ghost" id="backs">Add the backs</button>
     <button class="ghost" id="calib">Test sheet on plain paper</button>
     <button class="ghost" id="clear">Start over</button>
   </div>
@@ -74,41 +92,97 @@ from Sonos; add your own picture instead if a cover looks fuzzy.</p>
 <script>
 const SLOTS = 12, MIN_PX = 470;
 let titles = [];
-const chosen = {};        // slot -> {title} or {file: File}
+// slot -> a front {kind: "cover", title | file, src, px, soft}
+//      or a back  {kind: "info", title, artist, album, tracks, source}
+const chosen = {};
 
-const esc = s => String(s).replace(/[&<>"]/g, c =>
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const SOURCES = {
+  sonos: ["Read from the Sonos playlist.", false],
+  apple: ["From Apple Music.", false],
+  search: ["Matched by name on Apple Music — check it.", true],
+  "": ["Nothing found — type it in.", true],
+};
+
+function options(selected) {
+  return `<option value="">— empty —</option>` + titles.map(t =>
+    `<option value="${esc(t)}"${selected === t ? " selected" : ""}>${esc(t)}</option>`).join("");
+}
+
+function front(n, pick) {
+  return `
+      <img class="thumb${pick.src ? "" : " empty"}" ${pick.src ? `src="${pick.src}"` : ""}>
+      <select data-slot="${n}">${options(pick.title)}</select>
+      <div class="file">or a picture<input type="file" accept="image/*" data-slot="${n}"></div>
+      ${pick.soft ? `<div class="warn">${pick.px}px cover — may print soft</div>` : ""}`;
+}
+
+function back(n, pick) {
+  const [note, check] = pick.loading ? ["Looking it up…", false]
+                       : pick.source !== undefined ? SOURCES[pick.source] || SOURCES[""]
+                       : ["Pick a favourite, or just type.", false];
+  return `
+      <div class="back">
+        <select data-slot="${n}">${options(pick.title)}</select>
+        <div class="src${check ? " check" : ""}">${note}</div>
+        <input data-slot="${n}" data-field="artist" placeholder="Artist" value="${esc(pick.artist)}">
+        <input class="album" data-slot="${n}" data-field="album" placeholder="Album" value="${esc(pick.album)}">
+        <textarea data-slot="${n}" data-field="tracks" placeholder="Tracks, one per line">${esc((pick.tracks || []).join("\n"))}</textarea>
+      </div>`;
+}
+
+const filled = p => p && (p.kind === "info"
+  ? [p.artist, p.album, ...(p.tracks || [])].some(v => String(v || "").trim())
+  : p.title || p.file);
 
 function render() {
   const sheet = document.getElementById("sheet");
   sheet.innerHTML = "";
   for (let n = 1; n <= SLOTS; n++) {
     const pick = chosen[n] || {};
+    const isBack = pick.kind === "info";
     const el = document.createElement("div");
-    el.className = "slot" + (pick.title || pick.file ? " filled" : "");
+    el.className = "slot" + (filled(pick) ? " filled" : "");
     el.innerHTML = `
       <span class="n">${n}</span>
-      <img class="thumb${pick.src ? "" : " empty"}" ${pick.src ? `src="${pick.src}"` : ""}>
-      <select data-slot="${n}">
-        <option value="">— empty —</option>
-        ${titles.map(t => `<option value="${esc(t)}"${pick.title === t ? " selected" : ""}>${esc(t)}</option>`).join("")}
-      </select>
-      <div class="file">or a picture<input type="file" accept="image/*" data-slot="${n}"></div>
-      ${pick.soft ? `<div class="warn">${pick.px}px cover — may print soft</div>` : ""}`;
+      <div class="kind" data-slot="${n}">
+        <button class="${isBack ? "" : "on"}" data-kind="cover">Front</button>
+        <button class="${isBack ? "on" : ""}" data-kind="info">Back</button>
+      </div>
+      ${isBack ? back(n, pick) : front(n, pick)}`;
     sheet.appendChild(el);
   }
-  sheet.querySelectorAll("select").forEach(s => s.onchange = () => choose(+s.dataset.slot, s.value));
+  sheet.querySelectorAll(".kind button").forEach(b => b.onclick = () => {
+    const n = +b.parentElement.dataset.slot, kind = b.dataset.kind;
+    const was = chosen[n] || {};
+    if ((was.kind || "cover") === kind) return;
+    // keep the favourite when flipping a label over; a picture has no back
+    if (was.title) (kind === "info" ? chooseInfo : choose)(n, was.title);
+    else { chosen[n] = { kind }; render(); }
+  });
+  sheet.querySelectorAll("select").forEach(s => s.onchange = () => {
+    const n = +s.dataset.slot;
+    (chosen[n]?.kind === "info" ? chooseInfo : choose)(n, s.value);
+  });
   sheet.querySelectorAll("input[type=file]").forEach(f => f.onchange = () => {
     const n = +f.dataset.slot, file = f.files[0];
     if (!file) return;
-    chosen[n] = { file, src: URL.createObjectURL(file) };
+    chosen[n] = { kind: "cover", file, src: URL.createObjectURL(file) };
     render();
+  });
+  // typing edits the label in place — no re-render, or the caret would jump
+  sheet.querySelectorAll("[data-field]").forEach(f => f.oninput = () => {
+    const pick = chosen[+f.dataset.slot];
+    pick[f.dataset.field] = f.dataset.field === "tracks" ? f.value.split("\n") : f.value;
+    f.closest(".slot").classList.toggle("filled", !!filled(pick));
   });
 }
 
 async function choose(n, title) {
-  if (!title) { delete chosen[n]; render(); return; }
-  chosen[n] = { title, src: "" };
+  if (!title) { chosen[n] = { kind: "cover" }; render(); return; }
+  chosen[n] = { kind: "cover", title, src: "" };
   render();
   msg("Fetching the cover…");
   try {
@@ -116,14 +190,40 @@ async function choose(n, title) {
     if (!r.ok) throw new Error((await r.json()).message || "no cover");
     const px = +(r.headers.get("X-Source-Px") || 0);
     const blob = await r.blob();
-    chosen[n] = { title, src: URL.createObjectURL(blob), px,
+    if (chosen[n]?.title !== title) return;    // changed while we waited
+    chosen[n] = { kind: "cover", title, src: URL.createObjectURL(blob), px,
                   soft: px && px < MIN_PX };
     msg("");
   } catch (e) {
-    chosen[n] = { title, src: "" };
     msg("No cover on Sonos for that one — choose a picture instead.", true);
   }
   render();
+}
+
+async function chooseInfo(n, title) {
+  if (!title) { chosen[n] = { kind: "info" }; render(); return; }
+  chosen[n] = { kind: "info", title, artist: "", album: title, tracks: [], loading: true };
+  render();
+  let info = { source: "" };
+  try {
+    info = await (await fetch("/api/labels/info?title=" + encodeURIComponent(title))).json();
+  } catch (e) { /* offline: leave the title to edit */ }
+  if (chosen[n]?.title !== title || chosen[n].kind !== "info") return;
+  chosen[n] = { kind: "info", title, artist: info.artist || "", album: info.album || title,
+                tracks: info.tracks || [], source: info.source || "" };
+  render();
+}
+
+function addBacks() {
+  const backs = new Set(Object.values(chosen).filter(p => p.kind === "info").map(p => p.title));
+  const fronts = Object.values(chosen).filter(p => p.kind !== "info" && p.title)
+                                      .map(p => p.title).filter(t => !backs.has(t));
+  const free = [];
+  for (let n = 1; n <= SLOTS; n++) if (!filled(chosen[n])) free.push(n);
+  if (!fronts.length) return msg("Pick some fronts first — each gets its back.", true);
+  fronts.slice(0, free.length).forEach((t, i) => chooseInfo(free[i], t));
+  msg(fronts.length > free.length
+      ? `Only room for ${free.length} of ${fronts.length} backs on this sheet.` : "", fronts.length > free.length);
 }
 
 function msg(text, bad) {
@@ -136,8 +236,15 @@ async function build(calib) {
   const body = new FormData();
   let any = false;
   for (const [n, pick] of Object.entries(chosen)) {
-    if (pick.file) { body.append("file" + n, pick.file); any = true; }
-    else if (pick.title) { body.append("title" + n, pick.title); any = true; }
+    if (!filled(pick)) continue;
+    if (pick.kind === "info") {
+      body.append("kind" + n, "info");
+      body.append("artist" + n, pick.artist || "");
+      body.append("album" + n, pick.album || "");
+      body.append("tracks" + n, (pick.tracks || []).join("\n"));
+    } else if (pick.file) body.append("file" + n, pick.file);
+    else body.append("title" + n, pick.title);
+    any = true;
   }
   if (calib) body.append("calib", "1");
   if (!any && !calib) return msg("Pick a favourite or a picture first.", true);
@@ -153,6 +260,7 @@ async function build(calib) {
 
 document.getElementById("make").onclick = () => build(false);
 document.getElementById("calib").onclick = () => build(true);
+document.getElementById("backs").onclick = addBacks;
 document.getElementById("clear").onclick = () => {
   for (const k of Object.keys(chosen)) delete chosen[k];
   render(); msg("");

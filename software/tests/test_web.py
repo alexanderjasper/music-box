@@ -17,7 +17,7 @@ _soco = types.ModuleType("soco")
 _exc = types.ModuleType("soco.exceptions")
 _exc.SoCoException = type("SoCoException", (Exception,), {})
 _soco.exceptions = _exc
-_soco.discover = lambda timeout=None: set()
+_soco.discover = lambda timeout=None, **kw: set()
 sys.modules.setdefault("soco", _soco)
 sys.modules.setdefault("soco.exceptions", _exc)
 
@@ -117,6 +117,26 @@ def main():
                      content_type="multipart/form-data")
         check("calibration sheet needs no images", cal.status_code == 200
               and cal.data.startswith(b"%PDF"))
+
+        # back labels: the info lookup always gives something to edit, and a
+        # sheet of backs alone (no covers) builds
+        from musicbox import albuminfo
+        real_get, albuminfo._get = albuminfo._get, lambda path, **p: []
+        try:
+            info = c.get("/api/labels/info?title=Bohemian Rhapsody").get_json()
+        finally:
+            albuminfo._get = real_get
+        check("info lookup falls back to the title",
+              info["ok"] and info["album"] == "Bohemian Rhapsody" and info["tracks"] == [])
+        r = c.post("/api/labels/pdf", data={
+            "kind3": "info", "artist3": "Kim Larsen", "album3": "Fætter Mikkel",
+            "tracks3": "Fætter Mikkel\nJacob Haugaard (sic)"},
+            content_type="multipart/form-data")
+        check("a sheet of backs builds a PDF", r.status_code == 200
+              and r.data.startswith(b"%PDF") and b"/Helvetica-Bold" in r.data)
+        blank = c.post("/api/labels/pdf", data={"kind3": "info", "artist3": " "},
+                       content_type="multipart/form-data")
+        check("a blank back counts as nothing (400)", blank.status_code == 400)
 
         # nfc last-seen endpoint
         check("/api/nfc/last returns uid", c.get("/api/nfc/last").get_json()["uid"] == "04DEADBE")

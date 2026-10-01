@@ -30,6 +30,15 @@ Environment=MUSICBOX_PORT=80
 
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
+# Wi-Fi power saving on the Pi drops packets after a while idle, which looks like
+# Sonos having vanished. "+" runs this as root, "-" lets the box start anyway.
+ExecStartPre=-+/usr/sbin/iw dev wlan0 set power_save off
+
+# The service pats the watchdog while its NFC loop is still going round. If it
+# stops — a thread died or hung — systemd restarts it instead of the box
+# ignoring cards until someone pulls the plug.
+WatchdogSec=120
+
 # SIGINT rather than SIGTERM, so Python raises KeyboardInterrupt and the service
 # releases the GPIO pins on its way out
 KillSignal=SIGINT

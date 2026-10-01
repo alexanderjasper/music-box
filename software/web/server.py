@@ -3,7 +3,8 @@
   /          a start page linking to the two below
   /config    map each hardware room-slot → a Sonos room, and NFC tags → Sonos
              Favorites or playlists (live enrollment by holding a card on the box)
-  /labels    lay album art onto a sheet of die-cut card labels, ready to print
+  /labels    lay album art (fronts) and artist/album/tracks (backs) onto a sheet
+             of die-cut card labels, ready to print
 
 `create_app(box, ...)` is an app factory so the same routes serve both a laptop
 (this module's module-level `app`, used by `python -m web.server`) and the
@@ -57,8 +58,11 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
 
     @app.get("/")
     def start_page():
-        return render_template("index.html", connected=connected,
-                               connect_error=connect_error or "")
+        # Live, not the boot result: the service keeps looking for Sonos after a
+        # failed start, and a box that has found it shouldn't say it hasn't.
+        live = bool(box.speakers) or connected
+        return render_template("index.html", connected=live,
+                               connect_error="" if live else connect_error or "")
 
     @app.get("/config")
     def config_page():
@@ -143,11 +147,35 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
         return Response(data, mimetype="image/jpeg",
                         headers={"X-Source-Px": str(side)})
 
+    @app.get("/api/labels/info")
+    def label_info():
+        """Suggested back-label text for one favorite, to be edited on the page."""
+        title = request.args.get("title", "")
+        trace = []
+        try:
+            info = box.info_for(title, trace=trace)
+        except Exception as e:
+            trace.append(f"failed: {e}")
+            info = None
+        for line in trace:
+            print(f"[info] {title!r}: {line}", flush=True)
+        if info is None:   # still worth a label: the title, to fill in by hand
+            info = {"artist": "", "album": title, "tracks": [], "source": ""}
+        return jsonify({"ok": True, **info})
+
     @app.post("/api/labels/pdf")
     def label_pdf():
-        """Build the sheet. Each slot carries either a favorite title or a file."""
-        images, soft = {}, []
+        """Build the sheet. Each slot is a cover — a favorite title or a file —
+        or, with kind=info, a back label's artist, album and tracks."""
+        images, infos, soft = {}, {}, []
         for slot in range(1, labelsheet.SLOTS + 1):
+            if request.form.get(f"kind{slot}") == "info":
+                info = {"artist": request.form.get(f"artist{slot}", ""),
+                        "album": request.form.get(f"album{slot}", ""),
+                        "tracks": request.form.get(f"tracks{slot}", "").splitlines()}
+                if any(str(v).strip() for v in (info["artist"], info["album"], *info["tracks"])):
+                    infos[slot] = info
+                continue
             upload = request.files.get(f"file{slot}")
             title = (request.form.get(f"title{slot}") or "").strip()
             if upload and upload.filename:
@@ -168,10 +196,10 @@ def create_app(box, *, profile=None, room_map=None, card_path=None, room_path=No
             images[slot] = data
 
         calib = request.form.get("calib") == "1"
-        if not images and not calib:
+        if not images and not infos and not calib:
             return jsonify({"ok": False, "message": "Nothing chosen yet."}), 400
         bleed = float(request.form.get("bleed", 1.0))
-        pdf = labelsheet.build_sheet(images, bleed=bleed, calib=calib)
+        pdf = labelsheet.build_sheet(images, bleed=bleed, calib=calib, infos=infos)
         name = "labels-calibration.pdf" if calib else "labels.pdf"
         return Response(pdf, mimetype="application/pdf", headers={
             "Content-Disposition": f'inline; filename="{name}"',

@@ -16,7 +16,13 @@ from urllib.parse import parse_qs, unquote, urlparse
 import soco
 from soco.exceptions import SoCoException
 
+from . import albuminfo
 from .feedback import SilentBuzzer
+
+# What a speaker that has gone away looks like: SoCo's own errors, or the network
+# ones underneath it (requests raises OSErrors) — a timeout, a refused connection,
+# an address the router has since handed to something else.
+SONOS_ERRORS = (SoCoException, OSError)
 
 # (shuffle, repeat) -> Sonos play_mode string
 PLAY_MODES = {
@@ -90,8 +96,8 @@ class MusicBox:
 
     # --- setup -----------------------------------------------------------
 
-    def discover(self):
-        found = soco.discover(timeout=10)
+    def discover(self, timeout=10, scan=False):
+        found = soco.discover(timeout=timeout, allow_network_scan=scan)
         if not found:
             raise RuntimeError(
                 "No Sonos speakers found. Same Wi-Fi as the speakers? "
@@ -100,13 +106,47 @@ class MusicBox:
         self.speakers = {s.player_name: s for s in found}
         return self.rooms()
 
+    def refresh_speakers(self):
+        """Find the speakers again, keeping the old list if none answer.
+
+        The list from boot goes stale on a box that runs for days: the router
+        hands a speaker a new address, or one is unplugged and comes back. The
+        multicast search is flaky on some Wi-Fi, so this falls back to scanning
+        the subnet. Returns whether any were found.
+        """
+        try:
+            self.discover(timeout=5, scan=True)
+            return True
+        except (RuntimeError, *SONOS_ERRORS):
+            return False
+
+    def _heal(self):
+        """Recover from a failed Sonos call before it is tried once more."""
+        print("  sonos: a call failed — finding the speakers again", flush=True)
+        self.refresh_speakers()
+        self._fav_cache = None      # a favorite re-made in the app has new metadata
+        self._playlist_cache = None
+
+    def _retrying(self, fn):
+        """fn(), and once more after a heal if the network failed under it.
+
+        Only network errors heal: a plain Sonos refusal (skipping on the radio,
+        resuming an empty queue) would fail just the same the second time.
+        """
+        try:
+            return fn()
+        except OSError as e:
+            print(f"  sonos: {e}", flush=True)
+        self._heal()
+        return fn()
+
     def rooms(self):
         return sorted(self.speakers)
 
     # --- room arming (encoder push) -------------------------------------
 
     def toggle_room(self, query):
-        name = self._resolve_room(query)
+        name = self._find_room(query)
         if not name:
             self.buzzer.error()
             return _err(f"No single room matches {query!r}.")
@@ -114,13 +154,13 @@ class MusicBox:
             self.armed.discard(name)
             self.buzzer.disarmed()
             if self.playing:  # live: leaving the group stops this room now
-                self._try(self.speakers[name].unjoin)
+                self._try(lambda: self._spk(name).unjoin())
             return _ok(f"{name} disarmed")
         self.armed.add(name)
         self.buzzer.armed()
         if self.playing and self.coordinator_name and name != self.coordinator_name:
             # live: arming while music plays joins this room into the group now
-            self._try(lambda: self.speakers[name].join(self.speakers[self.coordinator_name]))
+            self._try(lambda: self._spk(name).join(self._spk(self.coordinator_name)))
         return _ok(f"{name} armed")
 
     # --- volume (encoder turn) ------------------------------------------
@@ -132,15 +172,19 @@ class MusicBox:
         return self._set_volume(query, absolute=_clamp(level))
 
     def _set_volume(self, query, absolute=None, relative=None):
-        name = self._resolve_room(query)
+        name = self._find_room(query)
         if not name:
             self.buzzer.error()
             return _err(f"No single room matches {query!r}.")
-        spk = self.speakers[name]
-        try:
+        def apply():
+            spk = self._spk(name)
             level = absolute if absolute is not None else _clamp(spk.volume + relative)
             spk.volume = level
-        except SoCoException as e:
+            return level
+
+        try:
+            level = self._retrying(apply)
+        except SONOS_ERRORS as e:
             self.buzzer.error()
             return _err(f"Sonos error setting volume: {e}")
         return _ok(f"{name} volume = {level}")
@@ -177,7 +221,8 @@ class MusicBox:
         self.current_card = None
         self._card_started = False
         if self.playing and self.coordinator_name:
-            self._try(self.speakers[self.coordinator_name].stop)
+            coordinator = self.coordinator_name
+            self._try(lambda: self._retrying(lambda: self._spk(coordinator).stop()))
         self.playing = False
         return _ok("card removed — playback stopped")
 
@@ -187,7 +232,6 @@ class MusicBox:
         if not self.armed:
             self.buzzer.error()  # the deliberate no-op: error beep, nothing else
             return _err("No room armed — error beep, nothing happens.")
-        coordinator = self._group_armed()
 
         # A freshly placed card we haven't started yet: load and play its
         # favorite. Once started, the card stays on the spot (turntable
@@ -195,36 +239,53 @@ class MusicBox:
         # through to pause/resume below, same as the no-card case.
         if self.current_card and not self._card_started:
             query = self.card_map[self.current_card]
-            fav = self._find_playable(query)
-            if not fav:
-                self.buzzer.error()
-                return _err(f"No Sonos favorite or playlist matches {query!r}.")
             try:
-                self._start_item(coordinator, fav)
-            except SoCoException as e:
+                return self._start_card(query)
+            except SONOS_ERRORS as e:
+                # Any failure earns one retry here, not just a network one: the
+                # Sonos app may have grouped the room under another, or the
+                # cached favorite may be out of date, and both look like a
+                # refusal. A card that silently does nothing is the worst case.
+                print(f"  sonos: starting {query!r} failed ({e}); retrying", flush=True)
+            self._heal()
+            try:
+                return self._start_card(query, regroup=True)
+            except SONOS_ERRORS as e:
                 self.buzzer.error()
                 return _err(f"Sonos refused to play: {e}")
-            self._reapply_play_mode()
-            self.playing = True
-            self._card_started = True
-            self.buzzer.confirm()
-            return _ok(f"Playing {fav.title!r} in {', '.join(sorted(self.armed))}")
 
         # Card already started, or no card on the spot: play acts as
         # pause/resume on the current group.
         try:
-            state = coordinator.get_current_transport_info()["current_transport_state"]
-            if state == "PLAYING":
-                coordinator.pause()
-                self.playing = False
-                return _ok("Paused")
-            coordinator.play()
-            self.playing = True
-            self.buzzer.confirm()
-            return _ok("Resumed")
-        except SoCoException as e:
+            return self._retrying(self._pause_or_resume)
+        except SONOS_ERRORS as e:
             self.buzzer.error()
             return _err(f"Nothing to resume: {e}")
+
+    def _start_card(self, query, regroup=False):
+        fav = self._find_playable(query)
+        if not fav:
+            self.buzzer.error()
+            return _err(f"No Sonos favorite or playlist matches {query!r}.")
+        coordinator = self._group_armed(regroup=regroup)
+        self._start_item(coordinator, fav)
+        self.playing = True
+        self._card_started = True
+        self._reapply_play_mode()  # after `playing`, or a latched shuffle is skipped
+        self.buzzer.confirm()
+        return _ok(f"Playing {fav.title!r} in {', '.join(sorted(self.armed))}")
+
+    def _pause_or_resume(self):
+        coordinator = self._group_armed()
+        state = coordinator.get_current_transport_info()["current_transport_state"]
+        if state == "PLAYING":
+            coordinator.pause()
+            self.playing = False
+            return _ok("Paused")
+        coordinator.play()
+        self.playing = True
+        self.buzzer.confirm()
+        return _ok("Resumed")
 
     def next(self):
         return self._skip("next")
@@ -236,10 +297,11 @@ class MusicBox:
         if not self.coordinator_name:
             self.buzzer.error()
             return _err("Nothing playing.")
+        coordinator = self.coordinator_name
         try:
-            getattr(self.speakers[self.coordinator_name], action)()
+            self._retrying(lambda: getattr(self._spk(coordinator), action)())
             return _ok(action)
-        except SoCoException:
+        except SONOS_ERRORS:
             self.buzzer.error()
             return _err(f"Can't {action} this source (e.g. a single track or radio).")
 
@@ -251,7 +313,7 @@ class MusicBox:
             for name, spk in self.speakers.items():
                 try:
                     volumes[name] = spk.volume
-                except SoCoException:
+                except SONOS_ERRORS:
                     volumes[name] = None
         return {
             "rooms": self.rooms(),
@@ -266,6 +328,20 @@ class MusicBox:
         }
 
     # --- internals -------------------------------------------------------
+
+    def _spk(self, name):
+        try:
+            return self.speakers[name]
+        except KeyError:
+            raise SoCoException(f"{name} did not answer the last search") from None
+
+    def _find_room(self, query):
+        """The room for query, searching for the speakers once on a miss — a
+        speaker that was off at the last search is back once it's switched on."""
+        name = self._resolve_room(query)
+        if name is None and self.refresh_speakers():
+            name = self._resolve_room(query)
+        return name
 
     def _resolve_room(self, query):
         q = _norm(str(query))
@@ -371,6 +447,40 @@ class MusicBox:
         note(f"player gave {len(data) if data else 0} bytes")
         return data
 
+    def info_for(self, query, trace=None):
+        """Suggested back-label text for a favorite or playlist, or None.
+
+        {"artist", "album", "tracks": [...], "source"} — source says how sure to
+        be: "sonos" (a playlist, read off the speakers), "apple" (looked up by the
+        catalogue id in the favorite), "search" (an exact name match), or "" when
+        only the title is known, as for a radio station.
+        """
+        note = trace.append if trace is not None else (lambda _m: None)
+        item = self._find_playable(query)
+        if item is None or not self.speakers:
+            note("no matching favorite or playlist")
+            return None
+        target = getattr(item, "reference", item)
+        artist = getattr(target, "creator", None) or ""
+        info = {"artist": artist, "album": item.title, "tracks": [], "source": ""}
+
+        if not hasattr(item, "reference") and self._container_target(item) is not None:
+            # A Sonos playlist is stored on the speakers, so just read it.
+            speaker = next(iter(self.speakers.values()))
+            tracks = list(speaker.music_library.browse(item, max_items=200))
+            creators = {getattr(t, "creator", "") for t in tracks}
+            info.update(tracks=[t.title for t in tracks], source="sonos",
+                        artist=creators.pop() if len(creators) == 1 else "")
+            return info
+
+        ids = [getattr(target, "item_id", ""), getattr(item, "item_id", "")]
+        ids += [r.uri for r in getattr(target, "resources", None) or []]
+        ids += [r.uri for r in getattr(item, "resources", None) or []]
+        found, source = albuminfo.from_apple(item.title, ids, artist, note=note)
+        if found:
+            info.update(found, source=source)
+        return info
+
     def _find_playable(self, query):
         """Match a favorite or Sonos playlist by title substring.
 
@@ -386,10 +496,16 @@ class MusicBox:
                     return item
         return None
 
-    def _group_armed(self):
-        names = sorted(self.armed)
+    def _group_armed(self, regroup=False):
+        names = sorted(n for n in self.armed if n in self.speakers)
+        if not names:
+            raise SoCoException("none of the armed rooms answered the last search")
         coordinator = self.speakers[names[0]]
         self.coordinator_name = names[0]
+        if regroup:
+            # The Sonos app may have put this room in someone else's group, and
+            # only a group's coordinator can be told what to play.
+            self._try(coordinator.unjoin)
         for n in names[1:]:
             self._try(lambda spk=self.speakers[n]: spk.join(coordinator))
         return coordinator
@@ -397,13 +513,13 @@ class MusicBox:
     def _reapply_play_mode(self):
         if self.playing and self.coordinator_name:
             mode = PLAY_MODES[(self.shuffle, self.repeat)]
-            self._try(lambda: setattr(self.speakers[self.coordinator_name], "play_mode", mode))
+            self._try(lambda: setattr(self._spk(self.coordinator_name), "play_mode", mode))
 
     @staticmethod
     def _try(fn):
         try:
             fn()
-        except SoCoException:
+        except SONOS_ERRORS:
             pass
 
 

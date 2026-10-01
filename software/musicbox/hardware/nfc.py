@@ -12,6 +12,13 @@ class NfcReader:
     def read_uid(self):
         raise NotImplementedError
 
+    def healthy(self):
+        """Whether the reader still answers. Only a reader that can tell says no."""
+        return True
+
+    def reset(self):
+        """Bring the reader back to a known state, as a power-up would."""
+
     def close(self):
         pass
 
@@ -32,15 +39,36 @@ class Pn532Reader(NfcReader):
     """
 
     def __init__(self, read_timeout=0.2):
+        self._read_timeout = read_timeout
+        self._i2c = None
+        self._pn532 = None
+        self.reset()
+
+    def reset(self):
+        """Open the bus afresh and wake and configure the chip, as at boot."""
         # All Pi-only; imported lazily so this module loads on a laptop.
         import board
         import busio
         from adafruit_pn532.i2c import PN532_I2C
 
-        self._read_timeout = read_timeout
-        i2c = busio.I2C(board.SCL, board.SDA)
-        self._pn532 = PN532_I2C(i2c, debug=False)
+        self.close()
+        self._i2c = busio.I2C(board.SCL, board.SDA)
+        self._pn532 = PN532_I2C(self._i2c, debug=False)
         self._pn532.SAM_configuration()
+
+    def healthy(self):
+        # Raises once the chip no longer answers; a wedged chip that still
+        # answers here is what the panel's periodic re-init is for.
+        return self._pn532 is not None and self._pn532.firmware_version is not None
+
+    def close(self):
+        self._pn532 = None
+        if self._i2c is not None:
+            try:
+                self._i2c.deinit()
+            except Exception:
+                pass
+            self._i2c = None
 
     def read_uid(self):
         uid = self._pn532.read_passive_target(timeout=self._read_timeout)

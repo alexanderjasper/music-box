@@ -15,7 +15,7 @@ _soco = types.ModuleType("soco")
 _exc = types.ModuleType("soco.exceptions")
 _exc.SoCoException = type("SoCoException", (Exception,), {})
 _soco.exceptions = _exc
-_soco.discover = lambda timeout=None: set()
+_soco.discover = lambda timeout=None, **kw: set()
 sys.modules.setdefault("soco", _soco)
 sys.modules.setdefault("soco.exceptions", _exc)
 

@@ -12,6 +12,7 @@ import os
 import sys
 import tempfile
 import threading
+import time
 import types
 
 # --- stub soco so importing the core works without it ----------------------
@@ -19,7 +20,7 @@ _soco = types.ModuleType("soco")
 _exc = types.ModuleType("soco.exceptions")
 _exc.SoCoException = type("SoCoException", (Exception,), {})
 _soco.exceptions = _exc
-_soco.discover = lambda timeout=None: set()
+_soco.discover = lambda timeout=None, **kw: set()
 sys.modules.setdefault("soco", _soco)
 sys.modules.setdefault("soco.exceptions", _exc)
 
@@ -93,6 +94,99 @@ def make_panel(room_map):
     profile = HardwareProfile(room_slots=[RoomSlot(id="1", button=4, encoder_a=17, encoder_b=27)])
     panel = Panel(box, profile, room_map)
     return panel, box
+
+
+class ScriptedReader:
+    """An NFC reader that plays back a script: a UID, None (empty), or an exception."""
+
+    def __init__(self, script, answers=True, then=None):
+        self.script = list(script)
+        self.then = then          # what every read returns once the script runs out
+        self.answers = answers
+        self.resets = 0
+
+    def read_uid(self):
+        step = self.script.pop(0) if self.script else self.then
+        if isinstance(step, Exception):
+            raise step
+        return step
+
+    def healthy(self):
+        return self.answers
+
+    def reset(self):
+        self.resets += 1
+        self.answers = True
+
+    def close(self):
+        pass
+
+
+def run_nfc(panel, reader, rounds):
+    import musicbox.hardware.panel as panel_mod
+
+    panel.nfc = reader
+    panel.profile.nfc_poll_interval = 0.001
+    panel.start_nfc()
+    deadline = time.monotonic() + 5
+    while reader.script and time.monotonic() < deadline:
+        time.sleep(0.005)
+    time.sleep(0.05 * rounds)
+    panel._stop.set()
+    panel._nfc_thread.join(timeout=2)
+
+
+def check_resilience():
+    import musicbox.hardware.panel as panel_mod
+
+    # a handler that blows up is logged and buzzed, and the caller carries on
+    panel, box = make_panel({"1": "Køkken"})
+    def boom():
+        raise RuntimeError("something nobody planned for")
+    box.play = boom
+    r = panel.on_play()
+    check("a crashing handler returns an error instead of raising", not r["ok"])
+    check("a crashing handler beeps an error", box.buzzer.cues[-1] == "error")
+
+    # read errors with a card on the spot are not a removal, and enough of them
+    # re-initialise the reader
+    panel, box = make_panel({"1": "Køkken"})
+    panel.on_room_set("1", True)
+    script = ["04AABB"] + [OSError(121, "Remote I/O error")] * panel_mod.NFC_RESET_AFTER + ["04AABB"]
+    reader = ScriptedReader(script, then="04AABB")
+    run_nfc(panel, reader, 1)
+    check("failed reads don't count as lifting the card", box.current_card == "04AABB"
+          and box.speakers["Køkken"].log.count("stop") == 0)
+    check("repeated read errors re-initialise the reader", reader.resets == 1)
+
+    # a card handler that raises doesn't end the loop: the next card still works
+    panel, box = make_panel({"1": "Køkken"})
+    real_place = box.place_card
+    def place_once_broken(uid):
+        if uid == "BAD":
+            raise RuntimeError("bad day")
+        return real_place(uid)
+    box.place_card = place_once_broken
+    run_nfc(panel, ScriptedReader(["BAD", None, None, None], then="04AABB"), 1)
+    check("the NFC loop survives a crashing card", box.current_card == "04AABB")
+    check("the loop exited cleanly when asked", not panel._nfc_thread.is_alive())
+
+    # an idle reader that stops answering is re-initialised
+    old = panel_mod.NFC_CHECK_EVERY
+    panel_mod.NFC_CHECK_EVERY = 0.0
+    try:
+        panel, box = make_panel({"1": "Køkken"})
+        reader = ScriptedReader([None, None], answers=False)
+        run_nfc(panel, reader, 1)
+        check("a silent idle reader is re-initialised", reader.resets >= 1)
+    finally:
+        panel_mod.NFC_CHECK_EVERY = old
+
+    # alive() goes false when the loop stops going round
+    panel, box = make_panel({"1": "Køkken"})
+    check("no NFC thread counts as alive", panel.alive())
+    run_nfc(panel, ScriptedReader([None]), 1)
+    check("a stopped NFC loop is not alive", not panel.alive())
 
 
 def check(label, cond):
@@ -192,6 +286,8 @@ def main():
     check("coalesced burst into 2 calls, not 10", len(calls) == 2)
     check("net delta preserved exactly", sum(d for _, d in calls) == 10 * VOLUME_STEP)
     check("intermediate steps were skipped", calls[1] == ("1", 9 * VOLUME_STEP))
+
+    check_resilience()
 
     print("\nAll panel checks passed.")
 

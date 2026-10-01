@@ -458,6 +458,28 @@ journalctl -u musicbox -f                        # follow the log
 ```
 
 It waits for the network (SoCo discovers Sonos at startup) and restarts on crash.
+
+Because it runs for days unattended, the box looks after itself rather than
+waiting to be unplugged:
+
+- **Speakers that move.** A Sonos call that fails sends the box looking for the
+  speakers again (multicast, then a subnet scan) and retries once — a speaker that
+  got a new address from the router, or a room the Sonos app grouped under
+  another, no longer needs a restart. The list is also refreshed every 10 minutes,
+  and if Sonos wasn't found at boot the box keeps looking.
+- **A wedged NFC reader.** The PN532 is re-initialised after repeated read errors,
+  when an idle reader stops answering, and every 10 minutes while the spot is
+  empty — what the restart used to do. A failed read no longer counts as lifting
+  the card.
+- **No silent deaths.** A failure in any button or card handler is logged with
+  its traceback and buzzed as an error; it can't take down the thread that
+  delivered it. If the NFC loop stalls anyway, the service stops patting the
+  systemd watchdog (`WatchdogSec=120`) and is restarted.
+- **Wi-Fi power saving** is switched off at start, since it drops packets on an
+  idle Pi.
+
+`journalctl -u musicbox | grep -E "sonos:|nfc:|watchdog:|Traceback"` shows what
+it had to recover from.
 When you switch the root filesystem to read-only (open question #8), set
 `MUSICBOX_DATA_DIR` in the unit to a writable mount — otherwise the cards and rooms
 the web app saves land in the RAM overlay and disappear on the next reboot.
@@ -482,11 +504,21 @@ own picture when a cover is too low-res. Press *Make the sheet* and it opens as 
 PDF to print. Only the labels you choose are filled, so a part-used sheet can be
 finished off later.
 
+Each label can be flipped to **Back**, for the recess on the back of the card:
+artist, album title and the track list. For an Apple Music favorite these come
+from Apple's catalogue by the id in the favorite's metadata, for a Sonos playlist
+straight off the speakers, and otherwise from an exact name match — or nothing,
+for you to type. They are editable fields on the page either way. *Add the backs*
+gives every front a back in a free slot, so one sheet does six cards. The text is
+Helvetica, fitted to the label: long titles shrink or get cut short, and a long
+album goes to two columns.
+
 There is a command-line equivalent for the same job:
 
 ```
 cd tools
 ./labels.py sheet.pdf 5=cover.jpg 6=other.png    # slots 1..12, L-R, top-bottom
+./labels.py sheet.pdf 1=cover.jpg 2=back.txt     # back label: artist, album, tracks
 ./labels.py grid.pdf --calib                     # outlines + numbers, plain paper
 ```
 

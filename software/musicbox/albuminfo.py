@@ -1,0 +1,110 @@
+"""Artist, album title and track list for a card's back label.
+
+Sonos hands over very little about a favorite: a title, and for Apple Music an
+item id with the catalogue number in it (`1004206calbum%3a1440857781`). That
+number is enough for Apple's public lookup API, which needs no account and gives
+the album's tracks in order. Without an id (an album from your own library, a
+service other than Apple's) it falls back to searching the catalogue by title,
+and only takes an exact name match — a confident wrong track list is worse than
+an empty one the label page asks you to fill in.
+
+Everything returned is a suggestion: the label page shows it in editable fields.
+"""
+
+import json
+import os
+import re
+import unicodedata
+import urllib.parse
+import urllib.request
+
+# Apple's catalogue differs per country, and lookups by id only find what the
+# storefront sells. The box is in Denmark; MUSICBOX_STOREFRONT overrides that.
+STOREFRONT = os.environ.get("MUSICBOX_STOREFRONT", "dk")
+API = "https://itunes.apple.com"
+
+_ID_RE = re.compile(r"(album|song)(?:%3a|:)(\d+)", re.I)
+_EDITION_RE = re.compile(r"\s+-\s+(Single|EP)$", re.I)
+
+
+def apple_id(*texts):
+    """('album' | 'song', catalogue id) from Sonos ids or URIs, or None."""
+    for text in texts:
+        m = _ID_RE.search(text or "")
+        if m:
+            return m.group(1).lower(), m.group(2)
+    return None
+
+
+def _get(path, **params):
+    params.setdefault("country", STOREFRONT)
+    url = f"{API}/{path}?{urllib.parse.urlencode(params)}"
+    with urllib.request.urlopen(url, timeout=8) as r:
+        return json.load(r).get("results", [])
+
+
+def _album_name(name):
+    return _EDITION_RE.sub("", name or "")
+
+
+def _fold(s):
+    s = unicodedata.normalize("NFKD", s or "").casefold()
+    return "".join(c for c in s if c.isalnum())
+
+
+def lookup_album(collection_id):
+    results = _get("lookup", id=collection_id, entity="song")
+    album = next((r for r in results if r.get("wrapperType") == "collection"), None)
+    if album is None:
+        return None
+    songs = sorted((r for r in results if r.get("wrapperType") == "track"
+                    and r.get("kind", "song") == "song"),  # not the bonus videos
+                   key=lambda r: (r.get("discNumber", 1), r.get("trackNumber", 0)))
+    return {"artist": album.get("artistName", ""),
+            "album": _album_name(album.get("collectionName")),
+            "tracks": [s.get("trackName", "") for s in songs]}
+
+
+def lookup_song(track_id):
+    song = next(iter(_get("lookup", id=track_id)), None)
+    if song is None:
+        return None
+    return {"artist": song.get("artistName", ""),
+            "album": song.get("trackName", ""),
+            "tracks": [song.get("trackName", "")]}
+
+
+def search_album(title, artist=""):
+    """The catalogue album named exactly `title` (by `artist`, if given)."""
+    term = f"{title} {artist}".strip()
+    for hit in _get("search", term=term, entity="album", limit=25):
+        if _fold(_album_name(hit.get("collectionName"))) != _fold(title):
+            continue
+        if artist and _fold(artist) not in _fold(hit.get("artistName")):
+            continue
+        return lookup_album(hit["collectionId"])
+    return None
+
+
+def from_apple(title, ids=(), artist="", note=lambda _m: None):
+    """Info for a favorite: by catalogue id if it has one, else by exact name.
+
+    Returns (info, source) — source is "apple" for an id lookup, "search" for a
+    name match, or None with info None when nothing trustworthy turned up.
+    """
+    found = apple_id(*ids)
+    try:
+        if found:
+            kind, number = found
+            note(f"apple {kind} id {number}")
+            info = lookup_album(number) if kind == "album" else lookup_song(number)
+            if info:
+                return info, "apple"
+            note("not in this storefront")
+        info = search_album(title, artist)
+        if info:
+            return info, "search"
+        note("no exact match by name")
+    except Exception as e:  # offline, or Apple changed something
+        note(f"lookup failed: {e}")
+    return None, None

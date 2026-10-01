@@ -19,7 +19,7 @@ class SoCoException(Exception):
 
 _exc.SoCoException = SoCoException
 _soco.exceptions = _exc
-_soco.discover = lambda timeout=None: set()
+_soco.discover = lambda timeout=None, **kw: set()
 sys.modules["soco"] = _soco
 sys.modules["soco.exceptions"] = _exc
 
@@ -160,6 +160,142 @@ def check_art_urls():
           bigger_art_urls("https://a.com/cover.jpg") == [])
 
 
+class GoneSpeaker(FakeSpeaker):
+    """A speaker the box still holds, at an address it has since lost."""
+
+    def _gone(self, *a, **k):
+        raise ConnectionError("[Errno 113] No route to host")
+
+    play_uri = clear_queue = stop = next = get_current_transport_info = _gone
+
+
+def check_self_healing():
+    import musicbox.core as core
+
+    def rediscover_as(speakers):
+        core.soco.discover = lambda timeout=None, **kw: set(speakers)
+
+    # a speaker that moved address: the card's first try fails on the network,
+    # the box finds the speakers again and plays on the fresh one — no error
+    box = make_box()
+    favs = box.speakers["Køkken"].music_library._favs
+    box.speakers["Køkken"] = GoneSpeaker("Køkken", favs)
+    fresh = FakeSpeaker("Køkken", favs)
+    rediscover_as([fresh, box.speakers["Alrum"]])
+    box.toggle_room("Køkken")
+    box.place_card("bohemian")
+    r = box.play()
+    check("a moved speaker is found again and plays", r["ok"]
+          and any("play_uri" in e for e in fresh.log))
+    check("no error beep for a healed play", "error" not in box.buzzer.cues)
+    check("the speaker list now holds the fresh one", box.speakers["Køkken"] is fresh)
+
+    # pause/resume and skip heal the same way
+    box.speakers["Køkken"] = GoneSpeaker("Køkken", favs)
+    check("pause heals a moved speaker", box.play()["message"] == "Paused")
+    box.speakers["Køkken"] = GoneSpeaker("Køkken", favs)
+    check("next heals a moved speaker", box.next()["ok"] and "next" in fresh.log)
+
+    # removing the card still stops the music after a move
+    box.play()  # resume
+    box.speakers["Køkken"] = GoneSpeaker("Køkken", favs)
+    box.remove_card()
+    check("removal stops a moved speaker", fresh.log[-1] == "stop")
+
+    # an armed room missing from the list (it was off at the last search)
+    box = make_box()
+    box.toggle_room("Køkken")
+    kok = box.speakers.pop("Køkken")
+    rediscover_as(list(box.speakers.values()) + [kok])
+    box.place_card("bohemian")
+    check("an armed room missing from the list is searched for",
+          box.play()["ok"] and any("play_uri" in e for e in kok.log))
+
+    # the Sonos app grouped the room under another: only coordinators take play_uri
+    box = make_box()
+    kok = box.speakers["Køkken"]
+    calls = []
+    def refuse_once(uri, meta=None):
+        calls.append(uri)
+        if len(calls) == 1:
+            raise core.SoCoException("not the coordinator")
+        FakeSpeaker.play_uri(kok, uri, meta)
+    kok.play_uri = refuse_once
+    rediscover_as(box.speakers.values())
+    box.toggle_room("Køkken")
+    box.place_card("bohemian")
+    r = box.play()
+    check("a regrouped room is made its own coordinator and plays",
+          r["ok"] and "unjoin" in kok.log and len(calls) == 2)
+
+    # nobody answers at all: one error, and a speaker list left intact
+    box = make_box()
+    favs = box.speakers["Køkken"].music_library._favs
+    box.speakers["Køkken"] = GoneSpeaker("Køkken", favs)
+    rediscover_as([])
+    box.toggle_room("Køkken")
+    box.place_card("bohemian")
+    r = box.play()
+    check("an unreachable speaker errors once, not crashes",
+          not r["ok"] and box.buzzer.cues[-1] == "error")
+    check("a failed search keeps the old speakers", "Alrum" in box.speakers)
+
+    # shuffle latched in before the card goes down applies to that card
+    box = make_box()
+    box.set_shuffle(True)
+    box.toggle_room("Køkken")
+    box.place_card("bohemian")
+    box.play()
+    check("a latched shuffle applies to a fresh card",
+          box.speakers["Køkken"].play_mode == "SHUFFLE_NOREPEAT")
+
+    core.soco.discover = lambda timeout=None, **kw: set()
+
+
+def check_album_info():
+    from musicbox import albuminfo
+
+    # a Sonos playlist is read off the speakers, no catalogue needed
+    box = make_box()
+    for spk in box.speakers.values():
+        spk.music_library.browse = lambda item, max_items=100: [
+            types.SimpleNamespace(title="Spor 1", creator="Kim Larsen"),
+            types.SimpleNamespace(title="Spor 2", creator="Kim Larsen")]
+    info = box.info_for("Saturday Kitchen")
+    check("a playlist's tracks come from Sonos", info["tracks"] == ["Spor 1", "Spor 2"]
+          and info["source"] == "sonos" and info["artist"] == "Kim Larsen")
+
+    # an Apple Music album favorite is looked up by the id in its metadata
+    asked = []
+    def fake_get(path, **params):
+        asked.append((path, params))
+        return [{"wrapperType": "collection", "artistName": "Sigurd Barrett",
+                 "collectionName": "Kongen Af Danmark - EP"},
+                {"wrapperType": "track", "kind": "song", "trackName": "To", "trackNumber": 2},
+                {"wrapperType": "track", "kind": "music-video", "trackName": "Video"},
+                {"wrapperType": "track", "kind": "song", "trackName": "En", "trackNumber": 1}]
+    real_get, albuminfo._get = albuminfo._get, fake_get
+    try:
+        box = make_box()
+        fav = box.speakers["Alrum"].music_library._favs[2]   # Greatest Hits, an album
+        fav.resources = [types.SimpleNamespace(
+            uri="x-rincon-cpcontainer:1004206calbum%3a1440857781?sid=204")]
+        info = box.info_for("Greatest Hits")
+        check("an Apple album is looked up by its catalogue id",
+              asked[0][0] == "lookup" and asked[0][1]["id"] == "1440857781")
+        check("its tracks come back in order, without the videos",
+              info["tracks"] == ["En", "To"] and info["source"] == "apple")
+        check("the ' - EP' is dropped from the album name",
+              info["album"] == "Kongen Af Danmark" and info["artist"] == "Sigurd Barrett")
+
+        albuminfo._get = lambda path, **params: (_ for _ in ()).throw(OSError("offline"))
+        info = box.info_for("Greatest Hits")
+        check("offline, the label still gets the title to edit",
+              info["album"] == "Greatest Hits" and info["tracks"] == [] and info["source"] == "")
+    finally:
+        albuminfo._get = real_get
+
+
 def check(label, cond):
     if not cond:
         raise AssertionError(f"FAILED: {label}")
@@ -291,6 +427,8 @@ def main():
     check("track did not touch the queue", not any("queue" in e for e in logT))
 
     check_art_urls()
+    check_self_healing()
+    check_album_info()
 
     print("\nAll core-logic checks passed.")
 
