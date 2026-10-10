@@ -468,9 +468,9 @@ class MusicBox:
             # A Sonos playlist is stored on the speakers, so just read it.
             speaker = next(iter(self.speakers.values()))
             tracks = list(speaker.music_library.browse(item, max_items=200))
-            creators = {getattr(t, "creator", "") for t in tracks}
-            info.update(tracks=[t.title for t in tracks], source="sonos",
-                        artist=creators.pop() if len(creators) == 1 else "")
+            artist, lines = albuminfo.tracklist(
+                [(t.title, getattr(t, "creator", "") or "") for t in tracks])
+            info.update(artist=artist, tracks=lines, source="sonos")
             return info
 
         ids = [getattr(target, "item_id", ""), getattr(item, "item_id", "")]

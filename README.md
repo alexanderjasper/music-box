@@ -508,7 +508,8 @@ Each label can be flipped to **Back**, for the recess on the back of the card:
 artist, album title and the track list. For an Apple Music favorite these come
 from Apple's catalogue by the id in the favorite's metadata, for a Sonos playlist
 straight off the speakers, and otherwise from an exact name match — or nothing,
-for you to type. They are editable fields on the page either way. *Add the backs*
+for you to type. A playlist's artist line is the artist most of its tracks are
+by; a mix has none, and each track names its own artist instead. They are editable fields on the page either way. *Add the backs*
 gives every front a back in a free slot, so one sheet does six cards. The text is
 Helvetica, fitted to the label: long titles shrink or get cut short, and a long
 album goes to two columns.

@@ -11,6 +11,7 @@ an empty one the label page asks you to fill in.
 Everything returned is a suggestion: the label page shows it in editable fields.
 """
 
+import collections
 import json
 import os
 import re
@@ -25,6 +26,7 @@ API = "https://itunes.apple.com"
 
 _ID_RE = re.compile(r"(album|song)(?:%3a|:)(\d+)", re.I)
 _EDITION_RE = re.compile(r"\s+-\s+(Single|EP)$", re.I)
+_COLLAB_RE = re.compile(r"\s*(?:&|,|\bfeat\.?|\bft\.|\bwith\b|\bx\b)\s*", re.I)
 
 
 def apple_id(*texts):
@@ -34,6 +36,28 @@ def apple_id(*texts):
         if m:
             return m.group(1).lower(), m.group(2)
     return None
+
+
+def lead_artist(artists):
+    """The artist most of the tracks are by, duets included, or "".
+
+    "Lille Bille & Pharfar" counts for Lille Bille. Under half the tracks and
+    it's a mix, which gets no artist line rather than a misleading one.
+    """
+    leads = [_COLLAB_RE.split(a, maxsplit=1)[0].strip() for a in artists if a]
+    if not leads:
+        return ""
+    name, count = collections.Counter(leads).most_common(1)[0]
+    return name if count * 2 >= len(artists) else ""
+
+
+def tracklist(tracks):
+    """(artist, track lines) from [(title, artist)]: titles alone under a lead
+    artist, "Title – Artist" for a mix, where who sings it is worth printing."""
+    artist = lead_artist([a for _, a in tracks])
+    if artist:
+        return artist, [t for t, _ in tracks]
+    return "", [f"{t} \u2013 {a}" if a else t for t, a in tracks]
 
 
 def _get(path, **params):

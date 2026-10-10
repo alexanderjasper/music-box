@@ -295,6 +295,15 @@ def check_album_info():
     finally:
         albuminfo._get = real_get
 
+    # a mix has no artist line, and says who sings each track instead
+    artist, lines = albuminfo.tracklist([("Bien", "Lille Bille & Maria Lucia"),
+                                         ("Rotten", "Lille Bille & Pharfar"),
+                                         ("Fætter Mikkel", "Lars Stryg Band")])
+    check("collaborations count for the lead artist", artist == "Lille Bille" and lines[0] == "Bien")
+    artist, lines = albuminfo.tracklist([("A", "One"), ("B", "Two"), ("C", "Three")])
+    check("a mix gets no artist, and each track its own",
+          artist == "" and lines == ["A \u2013 One", "B \u2013 Two", "C \u2013 Three"])
+
 
 def check(label, cond):
     if not cond:
