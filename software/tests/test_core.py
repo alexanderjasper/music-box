@@ -239,6 +239,12 @@ def check_self_healing():
     check("an unreachable speaker errors once, not crashes",
           not r["ok"] and box.buzzer.cues[-1] == "error")
     check("a failed search keeps the old speakers", "Alrum" in box.speakers)
+    box.place_card("bohemian")
+    box.play()
+    check("failed cards are counted in a row", box.card_failures == 2)
+    box.speakers["Køkken"] = FakeSpeaker("Køkken", favs)
+    box.place_card("bohemian")
+    check("a card that plays resets the count", box.play()["ok"] and box.card_failures == 0)
 
     # shuffle latched in before the card goes down applies to that card
     box = make_box()

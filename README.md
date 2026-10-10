@@ -479,6 +479,9 @@ waiting to be unplugged:
   its traceback and buzzed as an error; it can't take down the thread that
   delivered it. If the NFC loop stalls anyway, the service stops patting the
   systemd watchdog (`WatchdogSec=120`) and is restarted.
+- **Cards that keep failing.** If Sonos refuses two cards in a row even after
+  the box went looking for the speakers again, the service restarts itself — what
+  a reboot used to fix — and the card on the spot is read again.
 - **Wi-Fi power saving** is switched off at start, since it drops packets on an
   idle Pi.
 

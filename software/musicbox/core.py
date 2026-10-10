@@ -89,6 +89,7 @@ class MusicBox:
         self.repeat = False
         self.current_card = None               # the card on the spot, or None
         self._card_started = False             # has this card's favorite been loaded+started?
+        self.card_failures = 0                 # cards in a row Sonos refused even after a heal
         self.playing = False
         self.coordinator_name = None
         self._fav_cache = None
@@ -251,6 +252,7 @@ class MusicBox:
             try:
                 return self._start_card(query, regroup=True)
             except SONOS_ERRORS as e:
+                self.card_failures += 1
                 self.buzzer.error()
                 return _err(f"Sonos refused to play: {e}")
 
@@ -271,6 +273,7 @@ class MusicBox:
         self._start_item(coordinator, fav)
         self.playing = True
         self._card_started = True
+        self.card_failures = 0
         self._reapply_play_mode()  # after `playing`, or a latched shuffle is skipped
         self.buzzer.confirm()
         return _ok(f"Playing {fav.title!r} in {', '.join(sorted(self.armed))}")

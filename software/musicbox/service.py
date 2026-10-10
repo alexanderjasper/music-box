@@ -14,10 +14,11 @@ It also looks after itself, because it runs for days: a background thread keeps
 the speaker list fresh (and keeps looking if Sonos wasn't there at boot), and
 pats systemd's watchdog only while the NFC loop is still going round — so a
 wedged process is restarted instead of ignoring cards until someone pulls the
-plug.
+plug. Cards that keep failing to start restart it too.
 """
 
 import os
+import signal
 import socket
 import sys
 import threading
@@ -62,6 +63,11 @@ def _build_nfc(profile):
 SONOS_TIMEOUT = 6.0
 REFRESH_EVERY = 600.0   # s between re-finding the speakers
 WATCHDOG_EVERY = 15.0   # s between pats; musicbox.service allows WatchdogSec=120
+# Cards in a row that Sonos refused even after re-finding the speakers before the
+# service restarts itself. Whatever survives a heal (the Pi's Wi-Fi gone bad, say)
+# is what a reboot used to fix; a restart redoes the start-up that cleared it,
+# and the card still on the spot is read again.
+RESTART_AFTER_FAILED_CARDS = 2
 
 
 def _sd_notify(message):
@@ -102,6 +108,15 @@ def _log(result):
     print(f"  [{mark}] {result.get('message', '')}")
 
 
+def _restart_if_stuck(box):
+    """Exit for systemd to restart us once cards keep failing to start."""
+    if box.card_failures < RESTART_AFTER_FAILED_CARDS or not os.environ.get("INVOCATION_ID"):
+        return  # INVOCATION_ID unset: not a systemd service, nothing would start us again
+    print(f"  sonos: {box.card_failures} cards in a row failed; restarting", flush=True)
+    time.sleep(1.0)  # let the error buzz finish
+    os.kill(os.getpid(), signal.SIGINT)  # main() unwinds and releases the pins
+
+
 def build(discover=True):
     """Assemble box + panel + web app. Returns (app, panel, box)."""
     try:
@@ -125,7 +140,11 @@ def build(discover=True):
             error = str(e)
             print(f"  not connected: {error}")
 
-    panel = Panel(box, profile, room_map, nfc=_build_nfc(profile), on_change=_log)
+    def on_change(result):
+        _log(result)
+        _restart_if_stuck(box)
+
+    panel = Panel(box, profile, room_map, nfc=_build_nfc(profile), on_change=on_change)
     try:
         panel.bind()
         controls = len(panel._controls)
