@@ -505,8 +505,9 @@ PDF to print. Only the labels you choose are filled, so a part-used sheet can be
 finished off later.
 
 Each label can be flipped to **Back**, for the recess on the back of the card:
-artist, album title and the track list. For an Apple Music favorite these come
-from Apple's catalogue by the id in the favorite's metadata, for a Sonos playlist
+artist, album title and the track list. For an Apple Music album or song these
+come from Apple's catalogue by the id in the favorite's metadata, for an Apple
+Music playlist from its public page on music.apple.com, for a Sonos playlist
 straight off the speakers, and otherwise from an exact name match — or nothing,
 for you to type. A playlist's artist line is the artist most of its tracks are
 by; a mix has none, and each track names its own artist instead. They are editable fields on the page either way. *Add the backs*

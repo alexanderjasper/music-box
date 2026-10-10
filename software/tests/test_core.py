@@ -295,6 +295,32 @@ def check_album_info():
     finally:
         albuminfo._get = real_get
 
+    # an Apple Music playlist's tracks come from its public page
+    check("a playlist id is recognised",
+          albuminfo.apple_id("1006206cplaylist%3Apl.b8336374491445a6") == ("playlist", "pl.b8336374491445a6"))
+    check("a playlist id without pl. is not",
+          albuminfo.apple_id("1006206cplaylist%3A12345") is None)
+    page = """<html><script type="application/ld+json">{"@type": "MusicPlaylist",
+      "name": "David Byrne Essentials", "track": [{"name": "Angels"},
+      {"name": "Once In a Lifetime"}, {"name": "Strange Overtones"}]}</script>
+      <script type="application/json" id="serialized-server-data">{"data": [{"items": [
+      {"title": "Angels", "artistName": "David Byrne"},
+      {"title": "Once In a Lifetime", "artistName": "Talking Heads"},
+      {"title": "Strange Overtones", "artistName": "David Byrne & Brian Eno"}]}]}</script></html>"""
+    real_page, albuminfo._page = albuminfo._page, lambda path: page
+    try:
+        box = make_box()
+        fav = box.speakers["Alrum"].music_library._favs[2]
+        fav.resources = [types.SimpleNamespace(
+            uri="x-rincon-cpcontainer:1006206cplaylist%3Apl.b8336374491445a6?sid=204")]
+        info = box.info_for("Greatest Hits")
+        check("an Apple playlist gets its name and tracks from the page",
+              info["album"] == "David Byrne Essentials" and info["source"] == "apple"
+              and info["tracks"] == ["Angels", "Once In a Lifetime", "Strange Overtones"])
+        check("its lead artist counts the duets", info["artist"] == "David Byrne")
+    finally:
+        albuminfo._page = real_page
+
     # a mix has no artist line, and says who sings each track instead
     artist, lines = albuminfo.tracklist([("Bien", "Lille Bille & Maria Lucia"),
                                          ("Rotten", "Lille Bille & Pharfar"),

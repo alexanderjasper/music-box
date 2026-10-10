@@ -3,8 +3,10 @@
 Sonos hands over very little about a favorite: a title, and for Apple Music an
 item id with the catalogue number in it (`1004206calbum%3a1440857781`). That
 number is enough for Apple's public lookup API, which needs no account and gives
-the album's tracks in order. Without an id (an album from your own library, a
-service other than Apple's) it falls back to searching the catalogue by title,
+the album's tracks in order. Playlists (`playlist%3apl.b833…`) aren't in that
+API, so their tracks come from the public music.apple.com page instead, which
+carries them as schema.org data. Without an id (an album from your own library,
+a service other than Apple's) it falls back to searching the catalogue by title,
 and only takes an exact name match — a confident wrong track list is worse than
 an empty one the label page asks you to fill in.
 
@@ -23,17 +25,18 @@ import urllib.request
 # storefront sells. The box is in Denmark; MUSICBOX_STOREFRONT overrides that.
 STOREFRONT = os.environ.get("MUSICBOX_STOREFRONT", "dk")
 API = "https://itunes.apple.com"
+WEB = "https://music.apple.com"
 
-_ID_RE = re.compile(r"(album|song)(?:%3a|:)(\d+)", re.I)
+_ID_RE = re.compile(r"(album|song|playlist)(?:%3a|:)(pl\.[\w.-]+|\d+)", re.I)
 _EDITION_RE = re.compile(r"\s+-\s+(Single|EP)$", re.I)
 _COLLAB_RE = re.compile(r"\s*(?:&|,|\bfeat\.?|\bft\.|\bwith\b|\bx\b)\s*", re.I)
 
 
 def apple_id(*texts):
-    """('album' | 'song', catalogue id) from Sonos ids or URIs, or None."""
+    """('album' | 'song' | 'playlist', id) from Sonos ids or URIs, or None."""
     for text in texts:
         m = _ID_RE.search(text or "")
-        if m:
+        if m and (m.group(1).lower() == "playlist") == m.group(2).startswith("pl."):
             return m.group(1).lower(), m.group(2)
     return None
 
@@ -98,6 +101,49 @@ def lookup_song(track_id):
             "tracks": [song.get("trackName", "")]}
 
 
+def _page(path):
+    req = urllib.request.Request(f"{WEB}/{STOREFRONT}/{path}",
+                                 headers={"User-Agent": "Mozilla/5.0 (music-box)"})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def _script(html, attrs):
+    m = re.search(rf"<script[^>]*{attrs}[^>]*>(.*?)</script>", html, re.S)
+    return json.loads(m.group(1)) if m else None
+
+
+def lookup_playlist(playlist_id):
+    """An Apple Music playlist's name, tracks and their artists.
+
+    The page's schema.org block is the stable part and gives the tracks in
+    order. Artists only sit in the app's own server data, matched up by track
+    title; a track it doesn't name just goes without. A private playlist has no
+    public page, and errors like any other failed lookup.
+    """
+    html = _page(f"playlist/{playlist_id}")
+    ld = _script(html, r'type="application/ld\+json"')
+    if not ld or not ld.get("track"):
+        return None
+    titles = [t.get("name", "") for t in ld["track"]]
+    artists = {}
+    def walk(o):
+        if isinstance(o, dict):
+            if "artistName" in o and o.get("title"):
+                artists.setdefault(o["title"], o["artistName"])
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    try:
+        walk(_script(html, r'id="serialized-server-data"'))
+    except ValueError:
+        pass
+    artist, tracks = tracklist([(t, artists.get(t, "")) for t in titles])
+    return {"artist": artist, "album": ld.get("name", ""), "tracks": tracks}
+
+
 def search_album(title, artist=""):
     """The catalogue album named exactly `title` (by `artist`, if given)."""
     term = f"{title} {artist}".strip()
@@ -121,7 +167,8 @@ def from_apple(title, ids=(), artist="", note=lambda _m: None):
         if found:
             kind, number = found
             note(f"apple {kind} id {number}")
-            info = lookup_album(number) if kind == "album" else lookup_song(number)
+            info = {"album": lookup_album, "song": lookup_song,
+                    "playlist": lookup_playlist}[kind](number)
             if info:
                 return info, "apple"
             note("not in this storefront")
