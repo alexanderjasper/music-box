@@ -459,6 +459,10 @@ journalctl -u musicbox -f                        # follow the log
 
 It waits for the network (SoCo discovers Sonos at startup) and restarts on crash.
 
+Then `sudo bash pi-setup.sh` once: it keeps the journal across reboots (Raspberry
+Pi OS holds it in RAM, so rebooting a misbehaving box erases the evidence) and
+switches Wi-Fi power saving off for good, not just until the next reconnect.
+
 Because it runs for days unattended, the box looks after itself rather than
 waiting to be unplugged:
 
